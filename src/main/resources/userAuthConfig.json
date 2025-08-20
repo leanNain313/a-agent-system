@@ -1,0 +1,62 @@
+{
+  "permissions": [
+    {
+      "key": "user:manage",
+      "name": "成员管理",
+      "description": "管理空间成员，添加或移除成员"
+    },
+    {
+      "key": "ai:user",
+      "name": "ai使用的权限",
+      "description": "ai使用的权限"
+    },
+    {
+      "key": "ai:deploy",
+      "name": "生成页面的部署权限",
+      "description": "对生成的页面自动化部署"
+    },
+    {
+      "key": "page:manage",
+      "name": "页面管理审核",
+      "description": "对发布页面进行管理"
+    },
+    {
+      "key": "page:statistics",
+      "name": "系统业务统计",
+      "description": "查看系统使用情况"
+    }
+  ],
+  "roles": [
+    {
+      "key": "user",
+      "name": "使用者",
+      "permissions": [
+        "ai:user",
+        "ai:deploy"
+      ],
+      "description": "能够使用网站的基本功能"
+    },
+    {
+      "key": "auditor",
+      "name": "审核员",
+      "permissions": [
+        "ai:user",
+        "ai:deploy",
+        "page:manage"
+      ],
+      "description": "审核用户想要发布的页面, 以及对审核通过的页面进行管理"
+    },
+    {
+      "key": "admin",
+      "name": "管理员",
+      "permissions": [
+        "user:manage",
+        "ai:user",
+        "ai:deploy",
+        "page:manage",
+        "page:statistics"
+      ],
+      "description": "所有权限"
+    }
+  ]
+}
