@@ -2,7 +2,6 @@ package com.ai.service.impl;
 
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
-import cn.dev33.satoken.stp.parameter.SaLoginParameter;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.ai.Exception.BusinessException;
@@ -150,16 +149,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         UserVO userVO = (UserVO) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATUS);
         ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
         // 去除token
-//        StpUtil.kickout(userVO.getId());
+        StpUtil.kickout(userVO.getId());
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATUS);
-    }
-
-    /**
-     * 获取当前登录用户信息
-     */
-    @Override
-    public UserVO getCurrentUser(HttpServletRequest request) {
-        return (UserVO) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATUS);
     }
 
     /**
@@ -167,15 +158,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @param updateUserRequest 修改用户信息
      */
     @Override
-    public void updateUserByAdmin(UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+    public void updateUserByAdmin(UpdateUserRequest updateUserRequest) {
         // 对密码进行加密储存
         if (!StrUtil.isBlank(updateUserRequest.getUserPassword())) {
             String handledPassword = this.handlePassword(updateUserRequest.getUserPassword());
             updateUserRequest.setUserPassword(handledPassword);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        UserVO currentUser = this.getCurrentUser(request);
-        queryWrapper.eq("id", currentUser.getId());
+        UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        queryWrapper.eq("id", userVO.getId());
         User user = BeanUtil.copyProperties(updateUserRequest, User.class);
         boolean update = this.update(user, queryWrapper);
         ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "修改失败");
@@ -186,7 +177,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @param updateUserRequest 参数
      */
     @Override
-    public void updateUserByUser(UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+    public void updateUserByUser(UpdateUserRequest updateUserRequest) {
         // 对密码进行加密储存
         String handledPassword = this.handlePassword(updateUserRequest.getUserPassword());
         updateUserRequest.setUserPassword(handledPassword);

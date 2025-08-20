@@ -20,11 +20,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.security.PermissionCheck;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/user")
@@ -98,19 +95,18 @@ public class UserController {
      * 管理员修改用户信息
      *
      * @param updateUserRequest 请求参数
-     * @param request 请求
      */
     @PutMapping("/update/user")
     @Operation(summary = "管理员修改用户信息")
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
-    public BaseResponse<Object> updateUserByAdmin(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+    public BaseResponse<Object> updateUserByAdmin(@RequestBody UpdateUserRequest updateUserRequest) {
         if (ObjectUtil.isEmpty(updateUserRequest)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         if (ObjectUtil.isEmpty(updateUserRequest.getId())) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        userService.updateUserByAdmin(updateUserRequest, request);
+        userService.updateUserByAdmin(updateUserRequest);
         return ResultUtils.success();
     }
 
@@ -129,11 +125,11 @@ public class UserController {
         if (updateUserRequest.getId() == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "操作失败");
         }
-        UserVO currentUser = userService.getCurrentUser(request);
-        if (!currentUser.getId().equals(updateUserRequest.getId())) {
+        UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        if (!userVO.getId().equals(updateUserRequest.getId())) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "操作失败");
         }
-        userService.updateUserByUser(updateUserRequest, request);
+        userService.updateUserByUser(updateUserRequest);
         return ResultUtils.success();
     }
 

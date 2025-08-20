@@ -21,11 +21,9 @@ public interface UserService extends IService<User> {
 
     void loginOut(HttpServletRequest request);
 
-    UserVO getCurrentUser(HttpServletRequest request);
+    void updateUserByAdmin(UpdateUserRequest updateUserRequest);
 
-    void updateUserByAdmin(UpdateUserRequest updateUserRequest, HttpServletRequest request);
-
-    void updateUserByUser(UpdateUserRequest updateUserRequest, HttpServletRequest request);
+    void updateUserByUser(UpdateUserRequest updateUserRequest);
 
     void removeUserById(Long id, HttpServletRequest request);
 

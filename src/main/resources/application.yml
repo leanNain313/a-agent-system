@@ -21,6 +21,7 @@ spring:
           max-idle: 10
           # 连接池中的最小空闲连接
           min-idle: 0
+      database: 6
 server:
   port: 8123
   servlet:
@@ -67,3 +68,21 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://api.deepseek.com
+      api-key: sk-40f592429a6d42f8aa5f072e180740f5
+      model-name: deepseek-chat
+      log-requests: true
+      log-responses: true
+      max-tokens: 8192
+      strict-json-schema: true
+      response-format: json_object
+    streaming-chat-model:
+      base-url: https://api.deepseek.com
+      api-key: sk-40f592429a6d42f8aa5f072e180740f5
+      model-name: deepseek-chat
+      log-requests: true
+      log-responses: true
+      max-tokens: 8192
