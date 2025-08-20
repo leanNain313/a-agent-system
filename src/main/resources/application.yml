@@ -72,7 +72,7 @@ langchain4j:
   open-ai:
     chat-model:
       base-url: https://api.deepseek.com
-      api-key: sk-40f592429a6d42f8aa5f072e180740f5
+      api-key: <你的api key>
       model-name: deepseek-chat
       log-requests: true
       log-responses: true
@@ -81,7 +81,7 @@ langchain4j:
       response-format: json_object
     streaming-chat-model:
       base-url: https://api.deepseek.com
-      api-key: sk-40f592429a6d42f8aa5f072e180740f5
+      api-key: <你的api key>
       model-name: deepseek-chat
       log-requests: true
       log-responses: true
