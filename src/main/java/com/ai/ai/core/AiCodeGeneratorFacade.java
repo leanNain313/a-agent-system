@@ -6,6 +6,8 @@ import com.ai.ai.CodeFileSaver;
 import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.ai.model.HtmlCodeResult;
 import com.ai.ai.model.MultiFileCodeResult;
+import com.ai.ai.parser.CodeParserExecutor;
+import com.ai.ai.save.CodeFileSaverExecutor;
 import com.ai.ai.service.AiCodeGeneratorService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +37,15 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
         return switch (codeGenTypeEnum) {
-            case HTML -> generateAndSaveMultiFileCodeStream(userMessage);
-            case MULTI_FILE -> generateAndSaveMultiFileCodeStream(userMessage);
-            default -> {
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持该类型");
+            case HTML -> {
+                Flux<String> stringFlux = aiCodeGeneratorService.generateHtmlCode(userMessage);
+                yield handleCodeStream(stringFlux, CodeGenTypeEnum.HTML);
             }
+            case MULTI_FILE -> {
+                Flux<String> stringFlux = aiCodeGeneratorService.generateMultiFileCode(userMessage);
+                yield handleCodeStream(stringFlux, CodeGenTypeEnum.MULTI_FILE);
+            }
+            default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "未知代码类型");
         };
     }
 
@@ -67,6 +73,7 @@ public class AiCodeGeneratorFacade {
      * @param userMessage 用户消息
      * @return 原有的流
      */
+    @Deprecated
     private Flux<String> generateAndSaveHtmlCodeStream(String userMessage) {
         Flux<String> stringFlux = aiCodeGeneratorService.generateHtmlCode(userMessage);
         // 但流式返回完毕时在保存代码
@@ -83,6 +90,7 @@ public class AiCodeGeneratorFacade {
         });
     }
 
+    @Deprecated
     private Flux<String> generateAndSaveMultiFileCodeStream(String userMessage) {
         Flux<String> stringFlux = aiCodeGeneratorService.generateMultiFileCode(userMessage);
         StringBuilder stringBuilder = new StringBuilder();
@@ -94,6 +102,26 @@ public class AiCodeGeneratorFacade {
             String codeStr = stringBuilder.toString();
             MultiFileCodeResult result = CodeParseTool.parseMultiFileCode(codeStr);
             File file = CodeFileSaver.saveMultiFileCodeResult(result);
+            log.info("文件保存的路径：{}", file.getAbsolutePath());
+        });
+    }
+
+    /**
+     * html模式自动生成代码并保存(流式)
+     * @param codeStream 返回的消息流
+     * @return 原有的流
+     */
+    private Flux<String> handleCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenTypeEnum) {
+        // 但流式返回完毕时在保存代码
+        StringBuilder stringBuilder = new StringBuilder();
+        return codeStream.doOnNext(chunk -> {
+            // 拼接代码块
+            stringBuilder.append(chunk);
+        }).doOnComplete(() -> {
+            // 流式输出完成后保存代码
+            String codeStr = stringBuilder.toString();
+            Object result = CodeParserExecutor.executeParseTool(codeStr, codeGenTypeEnum);
+            File file = CodeFileSaverExecutor.executeSaver(result, codeGenTypeEnum);
             log.info("文件保存的路径：{}", file.getAbsolutePath());
         });
     }

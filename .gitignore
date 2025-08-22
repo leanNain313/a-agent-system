@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+
+# 忽略敏感配置
+src/main/resources/application-dev.yml
+
 ### STS ###
 .apt_generated
 .classpath

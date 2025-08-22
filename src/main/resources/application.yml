@@ -1,11 +1,13 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: ai-agent-system
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ai_agent_system # 配置你的数据库引擎
-    username: root
-    password: 1
+    url: jdbc:mysql://<你的数据库地址>/<你的数据库名称> # 配置你的数据库引擎
+    username: <你的账户>
+    password: <你的密码>
   data:
     redis: # 你的redis配置
       host: 127.0.0.1
@@ -68,11 +70,12 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+
 langchain4j:
   open-ai:
     chat-model:
       base-url: https://api.deepseek.com
-      api-key: sk-40f592429a6d42f8aa5f072e180740f5
+      api-key: <你的api密钥>
       model-name: deepseek-chat
       log-requests: true
       log-responses: true
@@ -81,7 +84,7 @@ langchain4j:
       response-format: json_object
     streaming-chat-model:
       base-url: https://api.deepseek.com
-      api-key: sk-40f592429a6d42f8aa5f072e180740f5
+      api-key: <你的api密钥>
       model-name: deepseek-chat
       log-requests: true
       log-responses: true
