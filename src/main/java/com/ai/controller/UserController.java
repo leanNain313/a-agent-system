@@ -17,9 +17,11 @@ import com.ai.model.dto.user.*;
 import com.ai.model.vo.user.UserVO;
 import com.ai.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -114,11 +116,10 @@ public class UserController {
      * 用户修改信息
      *
      * @param updateUserRequest 请求参数
-     * @param request 请求
      */
     @PutMapping("/update/admin")
     @Operation(summary = "用户自己修改个人信息")
-    public BaseResponse<Object> updateUserByUser(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+    public BaseResponse<Object> updateUserByUser(@RequestBody UpdateUserRequest updateUserRequest) {
         if (ObjectUtil.isEmpty(updateUserRequest)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -142,7 +143,7 @@ public class UserController {
     @PostMapping("/delete")
     @Operation(summary = "删除用户(管理员)")
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
-    public BaseResponse<Object> removeUserById(Long id, HttpServletRequest request) {
+    public BaseResponse<Object> removeUserById(@Parameter(description = "用户id(必须)")Long id, HttpServletRequest request) {
         if (ObjectUtil.isEmpty(id)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -159,7 +160,7 @@ public class UserController {
     @GetMapping("/page/list")
     @Operation(summary = "获取用户分页列表（管理员)")
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
-    public BaseResponse<ResultPage<UserVO>> getUserList(UserPageRequest userPageRequest) {
+    public BaseResponse<ResultPage<UserVO>> getUserList(@ParameterObject UserPageRequest userPageRequest) {
         if (ObjectUtil.isEmpty(userPageRequest)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -178,7 +179,7 @@ public class UserController {
     @PostMapping("/add")
     @Operation(summary = "添加用户（管理员）")
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
-    public BaseResponse<Object> addUser(AddUserRequest addUserRequest) {
+    public BaseResponse<Object> addUser(@RequestBody AddUserRequest addUserRequest) {
         if (ObjectUtil.isEmpty(addUserRequest)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -192,12 +193,36 @@ public class UserController {
         return ResultUtils.success();
     }
 
+    /**
+     * 用户封禁
+     */
     @PostMapping("/disable")
     @Operation(summary = "账户封禁接口")
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
-    public BaseResponse<Object> disabledUser(AccountDisableRequest accountDisableRequest) {
+    public BaseResponse<Object> disabledUser(@RequestBody AccountDisableRequest accountDisableRequest) {
         ThrowUtils.throwIf(accountDisableRequest == null, ErrorCode.NULL_ERROR);
         userService.disabledUser(accountDisableRequest);
         return ResultUtils.success();
+    }
+
+
+    /**
+     * 根据id查询用户详情
+     * @param id 用户id
+     */
+    @GetMapping("/detail")
+    @Operation(summary = "根据id获取用户详情")
+    @SaCheckPermission(UserPermissionConstant.AI_USER)
+    public BaseResponse<UserVO> getUserDetailById(@Parameter(description = "用户id(必须)") Long id) {
+        ThrowUtils.throwIf(id == null, ErrorCode.NULL_ERROR);
+        UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        if (userVO == null)  {
+            throw new BusinessException(ErrorCode.NO_LOGIN);
+        }
+        if (!userVO.getUserRole().equals(UserConstant.ADMIN_USER) && !userVO.getId().equals(id)) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        UserVO userDetailById = userService.getUserDetailById(id);
+        return ResultUtils.success(userDetailById);
     }
 }

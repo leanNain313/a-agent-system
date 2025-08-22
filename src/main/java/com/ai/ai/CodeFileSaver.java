@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
+@Deprecated
 @Component
 public class CodeFileSaver {
 

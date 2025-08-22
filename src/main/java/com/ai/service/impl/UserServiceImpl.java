@@ -271,6 +271,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
+     * 根据id获取用户详情
+     * @param id 用户id
+     */
+    @Override
+    public UserVO getUserDetailById(Long id) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        User user = this.getById(id);
+        ThrowUtils.throwIf(user == null, ErrorCode.SYSTEM_ERROR, "不存在该用户");
+        return BeanUtil.copyProperties(user, UserVO.class);
+    }
+
+    /**
      * 密码加密
      */
     private String handlePassword(String password) {

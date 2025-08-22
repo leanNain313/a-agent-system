@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
         // 设置超时时间为60秒（单位：毫秒）
-        configurer.setDefaultTimeout(60000000);
+        configurer.setDefaultTimeout(60000000 * 3600);
     }
 
     @Override

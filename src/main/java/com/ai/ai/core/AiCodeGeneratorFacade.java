@@ -32,18 +32,18 @@ public class AiCodeGeneratorFacade {
      * @param userMessage 用户消息
      * @param codeGenTypeEnum 生成模式
      */
-    public Flux<String> generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum) {
+    public Flux<String> generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 Flux<String> stringFlux = aiCodeGeneratorService.generateHtmlCode(userMessage);
-                yield handleCodeStream(stringFlux, CodeGenTypeEnum.HTML);
+                yield handleCodeStream(stringFlux, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
                 Flux<String> stringFlux = aiCodeGeneratorService.generateMultiFileCode(userMessage);
-                yield handleCodeStream(stringFlux, CodeGenTypeEnum.MULTI_FILE);
+                yield handleCodeStream(stringFlux, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "未知代码类型");
         };
@@ -111,7 +111,7 @@ public class AiCodeGeneratorFacade {
      * @param codeStream 返回的消息流
      * @return 原有的流
      */
-    private Flux<String> handleCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenTypeEnum) {
+    private Flux<String> handleCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         // 但流式返回完毕时在保存代码
         StringBuilder stringBuilder = new StringBuilder();
         return codeStream.doOnNext(chunk -> {
@@ -121,7 +121,7 @@ public class AiCodeGeneratorFacade {
             // 流式输出完成后保存代码
             String codeStr = stringBuilder.toString();
             Object result = CodeParserExecutor.executeParseTool(codeStr, codeGenTypeEnum);
-            File file = CodeFileSaverExecutor.executeSaver(result, codeGenTypeEnum);
+            File file = CodeFileSaverExecutor.executeSaver(result, codeGenTypeEnum, appId);
             log.info("文件保存的路径：{}", file.getAbsolutePath());
         });
     }

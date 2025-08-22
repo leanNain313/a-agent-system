@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 /**
  * @author ye
  */
+@Deprecated
 public class CodeParseTool {
 
     // 允许 ```html 后跟换行或空格

@@ -33,4 +33,6 @@ public interface UserService extends IService<User> {
 
     void disabledUser(AccountDisableRequest accountDisableRequest);
 
+    UserVO getUserDetailById(Long id);
+
 }

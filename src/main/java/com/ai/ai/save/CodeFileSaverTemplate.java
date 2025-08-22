@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.ai.enums.CodeGenTypeEnum;
+import com.ai.contant.AppConstant;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -16,13 +17,14 @@ import java.nio.charset.StandardCharsets;
 public abstract class CodeFileSaverTemplate<T> {
 
     // 文件保存根目录
-    protected static final String FILE_SAVE_DIR = System.getProperty("user.dir") + "/templates/code_output";
+    protected static final String FILE_SAVE_DIR = AppConstant.CODE_OUT_DIR;
 
-    public final File saveCode(T result) {
+    public final File saveCode(T result, Long appId) {
         // 校验参数
+        ThrowUtils.throwIf(appId ==null, ErrorCode.NULL_ERROR);
         validateInput(result);
         // 构建唯一目录
-        String dirPath = buildUnique();
+        String dirPath = buildUnique(appId);
         // 保存文件
         saveFiles(result ,dirPath);
         return new File(dirPath);
@@ -39,9 +41,9 @@ public abstract class CodeFileSaverTemplate<T> {
     /**
      * 构建目录的唯一雪花id
      */
-    protected final String buildUnique() {
+    protected final String buildUnique(Long appId) {
         String bizType = this.getCodeType().getValue();
-        String uniqueDirName = String.format("%s_%s", bizType, IdUtil.getSnowflakeNextIdStr());
+        String uniqueDirName = String.format("%s_%s", bizType, appId);
         String dirPath = FILE_SAVE_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;

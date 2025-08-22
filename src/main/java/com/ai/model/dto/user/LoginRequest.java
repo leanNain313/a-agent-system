@@ -12,13 +12,13 @@ public class LoginRequest implements Serializable {
     /**
      * 账户
      */
-    @Schema(description = "账户")
+    @Schema(description = "账户(必须)")
     private String userAccount;
 
     /**
      * 密码
      */
-    @Schema(description = "密码， 不得少于8位， 不得包含特殊字符")
+    @Schema(description = "密码， 不得少于8位， 不得包含特殊字符(必须)")
     private String userPassword;
 
     /**
