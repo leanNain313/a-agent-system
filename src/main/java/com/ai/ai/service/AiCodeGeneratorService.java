@@ -3,6 +3,7 @@ package com.ai.ai.service;
 import com.ai.ai.model.HtmlCodeResult;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
@@ -15,7 +16,7 @@ public interface AiCodeGeneratorService {
      * @return 返回代码生成结果
      */
     @SystemMessage(fromResource = "prompt/html.txt")
-    Flux<String> generateHtmlCode(@UserMessage String userMessage);
+    Flux<String> generateHtmlCode(String userMessage);
 
 
     /**
@@ -25,8 +26,16 @@ public interface AiCodeGeneratorService {
      * @return 返回代码生成结果
      */
     @SystemMessage(fromResource = "prompt/multiFile.txt")
-    Flux<String> generateMultiFileCode(@UserMessage String userMessage);
+    Flux<String> generateMultiFileCode(String userMessage);
 
+    /**
+     * 流式生成vue项目
+     * @param appId 会话id(应用id)
+     * @param userMessage 用户消息
+     * @return 流式返回内容
+     */
+    @SystemMessage(fromResource = "prompt/vue_project.md")
+    TokenStream generateVueProjectCode(@MemoryId Long appId, @UserMessage String userMessage);
 
     @SystemMessage(fromResource = "prompt/html.txt")
     HtmlCodeResult codeTest(@UserMessage String userMessage);

@@ -55,40 +55,16 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     public void saveChatMessage(Long appId, Long userId, String message, String messageTypeEnum) {
         ThrowUtils.throwIf(appId == null || userId == null || StrUtil.isBlank(message), ErrorCode.NULL_ERROR);
         ThrowUtils.throwIf(StrUtil.isBlank(messageTypeEnum), ErrorCode.NULL_ERROR);
-        ThrowUtils.throwIf(MessageTypeEnum.getEnumByValue(messageTypeEnum) == null, ErrorCode.PARAMS_ERROR);
+        MessageTypeEnum enumByValue = MessageTypeEnum.getEnumByValue(messageTypeEnum);
+        ThrowUtils.throwIf(enumByValue == null, ErrorCode.PARAMS_ERROR);
         // 仅应用创建者允许写入
         App app = appService.getById(appId);
         ThrowUtils.throwIf(app == null, ErrorCode.SYSTEM_ERROR, "应用不存在");
         if (!userId.equals(app.getUserId())) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
-        saveMessage(appId, userId, message, MessageTypeEnum.USER);
+        saveMessage(appId, userId, message, enumByValue);
     }
-
-//    @Override
-//    public void saveAiMessage(Long appId, Long userId, String message) {
-//        ThrowUtils.throwIf(appId == null || StrUtil.isBlank(message), ErrorCode.NULL_ERROR);
-//        // userId 可空（如系统触发），尽量回填创建者
-//        Long ownerId = userId;
-//        App app = appService.getById(appId);
-//        ThrowUtils.throwIf(app == null, ErrorCode.SYSTEM_ERROR, "应用不存在");
-//        if (ownerId == null) {
-//            ownerId = app.getUserId();
-//        }
-//        saveMessage(appId, ownerId, message, MessageTypeEnum.AI);
-//    }
-//
-//    @Override
-//    public void saveErrorMessage(Long appId, Long userId, String errorMessage) {
-//        ThrowUtils.throwIf(appId == null || StrUtil.isBlank(errorMessage), ErrorCode.NULL_ERROR);
-//        Long ownerId = userId;
-//        App app = appService.getById(appId);
-//        ThrowUtils.throwIf(app == null, ErrorCode.SYSTEM_ERROR, "应用不存在");
-//        if (ownerId == null) {
-//            ownerId = app.getUserId();
-//        }
-//        saveMessage(appId, ownerId, errorMessage, MessageTypeEnum.ERROR);
-//    }
 
     @Override
     public ResultPage<ChatHistoryVO> pageAppHistory(AppChatHistoryPageRequest request, Long requesterUserId) {

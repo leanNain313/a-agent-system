@@ -9,6 +9,7 @@ import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.ai.core.AiCodeGeneratorFacade;
+import com.ai.ai.core.StreamHandlerExecutor;
 import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.common.ResultPage;
 import com.ai.contant.AppConstant;
@@ -53,6 +54,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     @Resource
     private ChatHistoryService chatHistoryService;
 
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
+
     @Override
     public Long createApp(AppCreateRequest request, Long loginUserId) {
         if (request == null || loginUserId == null) {
@@ -64,6 +68,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         if (StrUtil.isBlank(request.getAppName())) {
             request.setAppName("新建应用");
         }
+        ThrowUtils.throwIf(StrUtil.isBlank(request.getCodeType()), ErrorCode.NULL_ERROR);
+        ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(request.getCodeType()) == null, ErrorCode.PARAMS_ERROR);
         App app = new App();
         app.setAppName(request.getAppName());
         app.setInitPrompt(request.getInitPrompt());
@@ -263,16 +269,17 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         // 1) 记录用户消息
         chatHistoryService.saveChatMessage(app.getId(), loginUserId, request.getMessage(), MessageTypeEnum.USER.getValue());
         // 2) 调用 AI 生成
-        Flux<String> stream = aiCodeGeneratorFacade.generateAndSaveCode(request.getMessage(),
+        Flux<String> streamFlux = aiCodeGeneratorFacade.generateAndSaveCode(request.getMessage(),
                 CodeGenTypeEnum.getEnumByValue(request.getCodeType()), request.getId());
-        // 3) 累积 AI 回复，成功后保存；若出错，保存错误信息
-        StringBuilder aiReply = new StringBuilder();
-        return stream.map(chunk -> {
-                    aiReply.append(chunk);
-                    return chunk;
-                })
-                .doOnError(error -> chatHistoryService.saveChatMessage(app.getId(), loginUserId, error.getMessage(), MessageTypeEnum.ERROR.getValue()))
-                .doOnComplete(() -> chatHistoryService.saveChatMessage(app.getId(), loginUserId, aiReply.toString(), MessageTypeEnum.AI.getValue()));
+         // 3) 累积 AI 回复，成功后保存；若出错，保存错误信息
+        return streamHandlerExecutor.executeHandler(streamFlux, chatHistoryService, request.getId(), loginUserId, CodeGenTypeEnum.getEnumByValue(request.getCodeType()));
+//        StringBuilder aiReply = new StringBuilder();
+//        return stream.map(chunk -> {
+//                    aiReply.append(chunk);
+//                    return chunk;
+//                })
+//                .doOnError(error -> chatHistoryService.saveChatMessage(app.getId(), loginUserId, error.getMessage(), MessageTypeEnum.ERROR.getValue()))
+//                .doOnComplete(() -> chatHistoryService.saveChatMessage(app.getId(), loginUserId, aiReply.toString(), MessageTypeEnum.AI.getValue()));
     }
 
     @Override
