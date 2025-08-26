@@ -1,5 +1,6 @@
 package com.ai.service;
 
+import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.common.ResultPage;
 import com.ai.model.dto.app.*;
 import com.ai.model.entity.App;
@@ -49,5 +50,5 @@ public interface AppService extends IService<App> {
     Flux<String> chatGenerateCode(AppChatRequest request, Long loginUserId);
 
     /** 一键部署 */
-    String deployWeb(Long id, UserVO userVO);
+    String deployWeb(Long id, UserVO userVO, CodeGenTypeEnum codeGenTypeEnum);
 }

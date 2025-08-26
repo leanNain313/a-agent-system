@@ -3,6 +3,7 @@ package com.ai.ai.service;
 import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.ai.enums.CodeGenTypeEnum;
+import com.ai.ai.tools.FileWriteTool;
 import com.ai.service.ChatHistoryService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -90,6 +91,7 @@ public class AiCodeGeneratorServiceFactory {
                     .chatModel(chatModel)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> messageWindowChatMemory) // 构建会会话记忆, 使用@Merory注解时必须这样构建
+                    .tools(new FileWriteTool())
                     .build();
             case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
                     .chatModel(chatModel)

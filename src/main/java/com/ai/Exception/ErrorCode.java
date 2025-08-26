@@ -17,7 +17,8 @@ public enum ErrorCode {
     NO_AUTH(40101, " 权限不足", "权限不足"),
     SYSTEM_ERROR(50000, "系统内部异常", "服务器出错"),
     ACCOUNT_DISABLE_ERROR(40007, "账户被封禁", ""),
-    FUNCTION_DISABLE_ERROR(40008, "该功能被封禁", "");
+    FUNCTION_DISABLE_ERROR(40008, "该功能被封禁", ""),
+    PROJECT_BUILD_ERROR(40009, "项目构建失败", "检查代码, 以及依赖");
 
     /**
      * 错误状态码

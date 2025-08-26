@@ -229,11 +229,13 @@ public class AppController {
     @SaCheckPermission(UserPermissionConstant.AI_DEPLOY)
     @Operation(summary = "一键部署网页")
     @PostMapping("/deploy")
-    public BaseResponse<Object> deployWeb(@Parameter(description = "应用id") Long id) {
+    public BaseResponse<Object> deployWeb(@Parameter(description = "应用id") Long id,@Parameter(description = "代码类型") String codeType) {
         ThrowUtils.throwIf(id == null, ErrorCode.NULL_ERROR);
         UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
-        ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
-        String url = appService.deployWeb(id, userVO);
+        ThrowUtils.throwIf(userVO == null || StrUtil.isBlank(codeType), ErrorCode.NO_LOGIN);
+        CodeGenTypeEnum enumByValue = CodeGenTypeEnum.getEnumByValue(codeType);
+        ThrowUtils.throwIf(enumByValue == null, ErrorCode.NULL_ERROR);
+        String url = appService.deployWeb(id, userVO, enumByValue);
         return ResultUtils.success(url);
     }
 }

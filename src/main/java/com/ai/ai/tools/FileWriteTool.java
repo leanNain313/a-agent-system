@@ -1,4 +1,4 @@
-package com.ai.ai.tool;
+package com.ai.ai.tools;
 
 import com.ai.contant.AppConstant;
 import dev.langchain4j.agent.tool.P;

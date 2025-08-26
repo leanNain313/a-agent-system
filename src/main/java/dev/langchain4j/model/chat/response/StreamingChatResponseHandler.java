@@ -13,7 +13,7 @@ public interface StreamingChatResponseHandler {
 
     /**
      * Invoked each time the model generates a partial response (usually a single token) in a textual response.
-     * If the model decides to execute a tool instead, this method will not be invoked;
+     * If the model decides to execute a tools instead, this method will not be invoked;
      * {@link #onCompleteResponse} will be invoked instead.
      *
      * @param partialResponse The partial response (usually a single token), which is a part of the complete response.
@@ -22,9 +22,9 @@ public interface StreamingChatResponseHandler {
 
     /**
      * TODO
-     * TODO this callback is called as soon as partial tool is available
+     * TODO this callback is called as soon as partial tools is available
      * TODO can be called multiple times
-     * TODO can be called for multiple tool executions,
+     * TODO can be called for multiple tools executions,
      * TODO give example of how this and other callback can be called
      * @param index TODO
      * @param partialToolExecutionRequest TODO
@@ -34,7 +34,7 @@ public interface StreamingChatResponseHandler {
 
     /**
      * TODO
-     * TODO this callback is called as soon as a single tool execution request is complete
+     * TODO this callback is called as soon as a single tools execution request is complete
      * TODO can be called multiple times
      * @param index TODO
      * @param completeToolExecutionRequest TODO

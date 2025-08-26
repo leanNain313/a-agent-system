@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
+import com.ai.ai.builder.VueProjectBuilder;
 import com.ai.ai.core.AiCodeGeneratorFacade;
 import com.ai.ai.core.StreamHandlerExecutor;
 import com.ai.ai.enums.CodeGenTypeEnum;
@@ -27,6 +28,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -56,6 +58,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
 
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
     @Override
     public Long createApp(AppCreateRequest request, Long loginUserId) {
@@ -283,7 +288,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     }
 
     @Override
-    public String deployWeb(Long id, UserVO userVO) {
+    public String deployWeb(Long id, UserVO userVO, CodeGenTypeEnum codeGenTypeEnum) {
         App app = this.getById(id);
         ThrowUtils.throwIf(app == null, ErrorCode.SYSTEM_ERROR, "该应用不存在");
         // 校验是否是本人
@@ -306,6 +311,15 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         }
         // 文件生成路径
         String deployDir = AppConstant.CODE_DEPLOY_DIR + File.separator + deployKey;
+        // vue项目特殊处理
+        if (codeGenTypeEnum == CodeGenTypeEnum.VUE_PROJECT) {
+            boolean b = vueProjectBuilder.buildProject(resourcesPath);
+            ThrowUtils.throwIf(!b, ErrorCode.PROJECT_BUILD_ERROR, "项目构建失败, 请见检查代码依赖");
+            // 检查dist目录是否存在
+            File file1 = new File(resourcesPath, "dist");
+            ThrowUtils.throwIf(!file1.exists(), ErrorCode.PROJECT_BUILD_ERROR, "项目未完成构建");
+            file = file1;
+        }
         try {
             FileUtil.copyContent(file, new File(deployDir), true);
         } catch (Exception e) {

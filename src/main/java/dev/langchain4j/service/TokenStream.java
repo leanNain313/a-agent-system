@@ -42,9 +42,9 @@ public interface TokenStream {
     TokenStream onRetrieved(Consumer<List<Content>> contentHandler);
 
     /**
-     * The provided consumer will be invoked if any tool is executed.
+     * The provided consumer will be invoked if any tools is executed.
      * <p>
-     * The invocation happens after the tool method has finished and before any other tool is executed.
+     * The invocation happens after the tools method has finished and before any other tools is executed.
      *
      * @param toolExecuteHandler lambda that consumes {@link ToolExecution}
      * @return token stream instance used to configure or start stream processing
