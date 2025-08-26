@@ -1,12 +1,11 @@
 package com.ai.ai.service;
 
 import com.ai.ai.model.HtmlCodeResult;
-import com.ai.ai.model.MultiFileCodeResult;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
-import org.springframework.stereotype.Component;
+import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
-@Component
 public interface AiCodeGeneratorService {
 
     /**
@@ -16,7 +15,7 @@ public interface AiCodeGeneratorService {
      * @return 返回代码生成结果
      */
     @SystemMessage(fromResource = "prompt/html.txt")
-    Flux<String> generateHtmlCode(String userMessage);
+    Flux<String> generateHtmlCode(@UserMessage String userMessage);
 
 
     /**
@@ -26,6 +25,9 @@ public interface AiCodeGeneratorService {
      * @return 返回代码生成结果
      */
     @SystemMessage(fromResource = "prompt/multiFile.txt")
-    Flux<String> generateMultiFileCode(String userMessage);
+    Flux<String> generateMultiFileCode(@UserMessage String userMessage);
 
+
+    @SystemMessage(fromResource = "prompt/html.txt")
+    HtmlCodeResult codeTest(@UserMessage String userMessage);
 }

@@ -58,15 +58,25 @@
             <version>1.1.0</version>
         </dependency>
         <dependency>
-        <groupId>dev.langchain4j</groupId>
-        <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
-        <version>1.1.0-beta7</version>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <version>1.1.0-beta7</version>
         </dependency>
         <!--第三方流式输出框架-->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-reactor</artifactId>
             <version>1.1.0-beta7</version>
+        </dependency>
+        <!--redis会话记忆-->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
+            <version>1.1.0-beta7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
         <!--sa-token权限认证框架-->
         <dependency>

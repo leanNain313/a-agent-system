@@ -18,7 +18,7 @@ public class PageRequest implements Serializable {
     /**
      * 页面大小
      */
-    @Schema(description = "页面大小(必须)")
+    @Schema(description = "页面大小(必须, 最多20条)")
     private Integer pageSize;
 
 //    /**

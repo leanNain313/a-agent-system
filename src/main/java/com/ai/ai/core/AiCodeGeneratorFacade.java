@@ -2,6 +2,7 @@ package com.ai.ai.core;
 
 import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
+import com.ai.Exception.ThrowUtils;
 import com.ai.ai.CodeFileSaver;
 import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.ai.model.HtmlCodeResult;
@@ -9,9 +10,9 @@ import com.ai.ai.model.MultiFileCodeResult;
 import com.ai.ai.parser.CodeParserExecutor;
 import com.ai.ai.save.CodeFileSaverExecutor;
 import com.ai.ai.service.AiCodeGeneratorService;
+import com.ai.ai.service.AiCodeGeneratorServiceFactory;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -25,7 +26,8 @@ import java.io.File;
 public class AiCodeGeneratorFacade {
 
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
+
 
     /**
      * 自动生成并保存
@@ -33,6 +35,8 @@ public class AiCodeGeneratorFacade {
      * @param codeGenTypeEnum 生成模式
      */
     public Flux<String> generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
+        ThrowUtils.throwIf(aiCodeGeneratorService == null, ErrorCode.PARAMS_ERROR);
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
@@ -42,7 +46,7 @@ public class AiCodeGeneratorFacade {
                 yield handleCodeStream(stringFlux, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
-                Flux<String> stringFlux = aiCodeGeneratorService.generateMultiFileCode(userMessage);
+                Flux<String> stringFlux = aiCodeGeneratorService.generateMultiFileCode( userMessage);
                 yield handleCodeStream(stringFlux, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "未知代码类型");
@@ -75,7 +79,8 @@ public class AiCodeGeneratorFacade {
      */
     @Deprecated
     private Flux<String> generateAndSaveHtmlCodeStream(String userMessage) {
-        Flux<String> stringFlux = aiCodeGeneratorService.generateHtmlCode(userMessage);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(1L);
+        Flux<String> stringFlux = aiCodeGeneratorService.generateHtmlCode( userMessage);
         // 但流式返回完毕时在保存代码
         StringBuilder stringBuilder = new StringBuilder();
         return stringFlux.doOnNext(chunk -> {
@@ -92,6 +97,7 @@ public class AiCodeGeneratorFacade {
 
     @Deprecated
     private Flux<String> generateAndSaveMultiFileCodeStream(String userMessage) {
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(1L);
         Flux<String> stringFlux = aiCodeGeneratorService.generateMultiFileCode(userMessage);
         StringBuilder stringBuilder = new StringBuilder();
         return stringFlux.doOnNext(chunk -> {

@@ -18,7 +18,7 @@ class AiCodeGeneratorFacadeTest {
 
     @Test
     void generateAndSaveCode() {
-        Flux<String> stringFlux = aiCodeGeneratorFacade.generateAndSaveCode("简单生成一个登录网页", CodeGenTypeEnum.MULTI_FILE, 1L);
+        Flux<String> stringFlux = aiCodeGeneratorFacade.generateAndSaveCode("简单生成一个登录网页不超多20行， 标题是小y", CodeGenTypeEnum.MULTI_FILE, 3L);
         List<String> result = stringFlux.collectList().block();
         assertNotNull(result);
     }

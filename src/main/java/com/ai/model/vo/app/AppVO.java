@@ -37,6 +37,7 @@ public class AppVO {
     @Schema(description = "插查询优先级， 数字越大优先级越高")
     private Integer priority;
 
+    @JsonSerialize(using = ToStringSerializer.class)
     @Schema(description = "关联用户id")
     private Long userId;
 

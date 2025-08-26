@@ -45,8 +45,8 @@ public interface AppService extends IService<App> {
     /** 管理员根据 id 查看应用详情 */
     AppVO getAppDetailByAdmin(Long appId);
 
-    /** 对话生成页面 */
-    Flux<String> chatGenerateCode(AppChatRequest request);
+    /** 对话生成页面（会记录聊天历史） */
+    Flux<String> chatGenerateCode(AppChatRequest request, Long loginUserId);
 
     /** 一键部署 */
     String deployWeb(Long id, UserVO userVO);

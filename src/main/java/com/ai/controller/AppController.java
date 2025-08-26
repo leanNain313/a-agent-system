@@ -205,9 +205,12 @@ public class AppController {
     public Flux<ServerSentEvent<String>> chatGenerateCode(AppChatRequest request) {
         // 参数校验
         ThrowUtils.throwIf(request == null, ErrorCode.NULL_ERROR);
-        ThrowUtils.throwIf(StrUtil.isBlank(request.getMessage()) || request.getId() == null || StrUtil.isBlank(request.getCodeType()), ErrorCode.NULL_ERROR);
+        ThrowUtils.throwIf(StrUtil.isBlank(request.getMessage()) || request.getId() == null
+                || StrUtil.isBlank(request.getCodeType()), ErrorCode.NULL_ERROR);
         ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(request.getCodeType()) == null, ErrorCode.PARAMS_ERROR);
-        Flux<String> stringFlux = appService.chatGenerateCode(request);
+        UserVO loginUser = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_LOGIN);
+        Flux<String> stringFlux = appService.chatGenerateCode(request, loginUser.getId());
         return stringFlux.map(chunk -> {
             // 分装返回内容
             Map<String, String> data = Map.of("v", chunk);
@@ -220,8 +223,7 @@ public class AppController {
                 ServerSentEvent.<String>builder()
                         .event("done")
                         .data("")
-                        .build()
-        ));
+                        .build()));
     }
 
     @SaCheckPermission(UserPermissionConstant.AI_DEPLOY)
@@ -235,4 +237,3 @@ public class AppController {
         return ResultUtils.success(url);
     }
 }
-
