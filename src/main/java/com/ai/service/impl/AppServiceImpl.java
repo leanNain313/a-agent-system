@@ -12,6 +12,8 @@ import com.ai.ai.builder.VueProjectBuilder;
 import com.ai.ai.core.AiCodeGeneratorFacade;
 import com.ai.ai.core.StreamHandlerExecutor;
 import com.ai.ai.enums.CodeGenTypeEnum;
+import com.ai.ai.service.AiCodeGeneratorService;
+import com.ai.ai.service.AiSmartRouterGeneratorService;
 import com.ai.common.ResultPage;
 import com.ai.contant.AppConstant;
 import com.ai.mapper.AppMapper;
@@ -22,6 +24,7 @@ import com.ai.model.vo.app.AppVO;
 import com.ai.model.vo.user.UserVO;
 import com.ai.service.AppService;
 import com.ai.service.ChatHistoryService;
+import com.ai.service.ScreenshotService;
 import com.ai.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -62,6 +65,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     @Resource
     private VueProjectBuilder vueProjectBuilder;
 
+    @Resource
+    private ScreenshotService screenshotService;
+
+    @Resource
+    private AiSmartRouterGeneratorService aiSmartRouterGeneratorService;
+
     @Override
     public Long createApp(AppCreateRequest request, Long loginUserId) {
         if (request == null || loginUserId == null) {
@@ -73,12 +82,14 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         if (StrUtil.isBlank(request.getAppName())) {
             request.setAppName("新建应用");
         }
-        ThrowUtils.throwIf(StrUtil.isBlank(request.getCodeType()), ErrorCode.NULL_ERROR);
-        ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(request.getCodeType()) == null, ErrorCode.PARAMS_ERROR);
+        // ai智能选择生成模式
+        CodeGenTypeEnum codeGenTypeEnum = aiSmartRouterGeneratorService.smartRouterSelect(request.getInitPrompt());
+        ThrowUtils.throwIf(codeGenTypeEnum == null, ErrorCode.SYSTEM_ERROR, "ai对话初始化失败");
+        ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(codeGenTypeEnum.getValue()) == null, ErrorCode.SYSTEM_ERROR,  "ai对话初始化失败");
         App app = new App();
         app.setAppName(request.getAppName());
         app.setInitPrompt(request.getInitPrompt());
-        app.setCodeType(request.getCodeType());
+        app.setCodeType(codeGenTypeEnum.getValue());
         app.setUserId(loginUserId);
         app.setCreateTime(new Date());
         app.setUpdateTime(new Date());
@@ -326,12 +337,31 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
             log.error("部署失败：{}", e.getMessage());
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署失败");
         }
-        // 更新数据库
-        app.setDeployedTime(new Date());
-        app.setDeployKey(deployKey);
-        boolean b = this.saveOrUpdate(app);
-        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "部署失败");
-        return String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        // 获取应用封面并更新数据库
+        String appUrl = String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        generateAppScreenshotAsync(id, appUrl);
+        return appUrl;
+    }
+
+    /**
+     * 虚拟线程异步执行
+     * @param appId 应用id
+     * @param appUrl 应用部署路由
+     */
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        // 使用虚拟线程异步执行
+        Thread.startVirtualThread(() -> {
+            // 调用截图
+            String imageUrl = screenshotService.generateScreenshot(appUrl);
+            App app = new App();
+            app.setId(appId);
+            app.setDeployedTime(new Date());
+            app.setDeployKey(appUrl);
+            app.setCover(imageUrl);
+            boolean b = this.saveOrUpdate(app);
+            ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "部署失败");
+        });
     }
 
     /**

@@ -51,4 +51,6 @@ public interface AppService extends IService<App> {
 
     /** 一键部署 */
     String deployWeb(Long id, UserVO userVO, CodeGenTypeEnum codeGenTypeEnum);
+
+    void generateAppScreenshotAsync(Long appId, String appUrl);
 }

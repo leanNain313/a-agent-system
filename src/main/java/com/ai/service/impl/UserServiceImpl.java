@@ -9,6 +9,7 @@ import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.common.ResultPage;
 import com.ai.contant.UserConstant;
+import com.ai.manager.cos.CosManager;
 import com.ai.mapper.UserMapper;
 import com.ai.model.dto.user.*;
 import com.ai.model.entity.User;
@@ -19,6 +20,7 @@ import com.ai.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,6 +43,8 @@ import java.util.stream.Collectors;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService {
 
+    @Resource
+    private CosManager cosManager;
 
     /**
      * 注册
@@ -164,10 +168,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             String handledPassword = this.handlePassword(updateUserRequest.getUserPassword());
             updateUserRequest.setUserPassword(handledPassword);
         }
+        User byId = this.getById(updateUserRequest.getId());
+        ThrowUtils.throwIf(byId == null, ErrorCode.SYSTEM_ERROR, "该用户不存在");
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
         queryWrapper.eq("id", userVO.getId());
         User user = BeanUtil.copyProperties(updateUserRequest, User.class);
+        if (!StrUtil.isBlank(user.getUserAvatar()) && !StrUtil.isBlank(user.getUserAvatar())) {
+            cosManager.deleteFile(byId.getUserAvatar());
+        }
         boolean update = this.update(user, queryWrapper);
         ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "修改失败");
     }
@@ -181,10 +190,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 对密码进行加密储存
         String handledPassword = this.handlePassword(updateUserRequest.getUserPassword());
         updateUserRequest.setUserPassword(handledPassword);
+        User byId = this.getById(updateUserRequest.getId());
+        ThrowUtils.throwIf(byId == null, ErrorCode.SYSTEM_ERROR, "该用户不存在");
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("id", updateUserRequest.getId());
         User user = BeanUtil.copyProperties(updateUserRequest, User.class);
         user.setUserRole("user");
+        if (!StrUtil.isBlank(user.getUserAvatar()) && !StrUtil.isBlank(user.getUserAvatar())) {
+            cosManager.deleteFile(byId.getUserAvatar());
+        }
         boolean update = this.update(user, queryWrapper);
         ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "修改失败");
     }

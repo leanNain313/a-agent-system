@@ -19,9 +19,9 @@ public class AppCreateRequest {
     @Schema(description = "初始化 Prompt(必须)")
     private String initPrompt;
 
-    /**
-     * 代码生成类型（可选，透传枚举字符串）
-     */
-    @Schema(description = "透传枚举字符串, html, multi_file(必须)")
-    private String codeType;
+//    /**
+//     * 代码生成类型（可选，透传枚举字符串）
+//     */
+//    @Schema(description = "透传枚举字符串, html, multi_file(必须)")
+//    private String codeType;
 }

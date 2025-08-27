@@ -1,5 +1,6 @@
 package com.ai.ai.service;
 
+import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.ai.model.HtmlCodeResult;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
@@ -36,6 +37,7 @@ public interface AiCodeGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/vue_project.md")
     TokenStream generateVueProjectCode(@MemoryId Long appId, @UserMessage String userMessage);
+
 
     @SystemMessage(fromResource = "prompt/html.txt")
     HtmlCodeResult codeTest(@UserMessage String userMessage);

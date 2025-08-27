@@ -2,6 +2,7 @@ package com.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -12,16 +13,19 @@ import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.common.BaseResponse;
 import com.ai.common.ResultPage;
 import com.ai.common.ResultUtils;
+import com.ai.contant.AppConstant;
 import com.ai.contant.UserConstant;
 import com.ai.manager.auth.model.UserPermissionConstant;
 import com.ai.model.dto.app.*;
 import com.ai.model.vo.app.AppVO;
 import com.ai.model.vo.user.UserVO;
 import com.ai.service.AppService;
+import com.ai.service.CodeDownloadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -29,7 +33,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.util.Map;
+import java.util.Random;
 
 @RestController
 @RequestMapping("/app")
@@ -38,6 +44,9 @@ public class AppController {
 
     @Resource
     private AppService appService;
+
+    @Resource
+    private CodeDownloadService codeDownloadService;
 
     /**
      * 用户创建应用（须填写 initPrompt）
@@ -49,7 +58,6 @@ public class AppController {
         if (request == null || StrUtil.isBlank(request.getInitPrompt())) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(request.getCodeType()) == null, ErrorCode.PARAMS_ERROR);
         UserVO loginUser = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NO_LOGIN);
@@ -229,7 +237,10 @@ public class AppController {
     @SaCheckPermission(UserPermissionConstant.AI_DEPLOY)
     @Operation(summary = "一键部署网页")
     @PostMapping("/deploy")
-    public BaseResponse<Object> deployWeb(@Parameter(description = "应用id") Long id,@Parameter(description = "代码类型") String codeType) {
+    public BaseResponse<Object> deployWeb(@RequestBody AppDeployRequest request) {
+        ThrowUtils.throwIf(request == null, ErrorCode.NULL_ERROR);
+        Long id = request.getId();
+        String codeType = request.getCodeType();
         ThrowUtils.throwIf(id == null, ErrorCode.NULL_ERROR);
         UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
         ThrowUtils.throwIf(userVO == null || StrUtil.isBlank(codeType), ErrorCode.NO_LOGIN);
@@ -237,5 +248,25 @@ public class AppController {
         ThrowUtils.throwIf(enumByValue == null, ErrorCode.NULL_ERROR);
         String url = appService.deployWeb(id, userVO, enumByValue);
         return ResultUtils.success(url);
+    }
+
+    @Operation(summary = "下载源码")
+    @SaCheckPermission(UserPermissionConstant.AI_DEPLOY)
+    @GetMapping("/download")
+    public void CodeDownload(@Parameter(description = "应用id") Long id, HttpServletResponse response) {
+        ThrowUtils.throwIf(id == null, ErrorCode.NULL_ERROR);
+        UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
+        //查询app信息
+        AppVO appDetail = appService.getAppDetailById(id, userVO.getId());
+        ThrowUtils.throwIf(appDetail == null, ErrorCode.SYSTEM_ERROR, "该应用不存在");
+        // 权限校验
+        if (!userVO.getUserRole().equals(UserConstant.ADMIN_USER) && !userVO.getId().equals(appDetail.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        // 构建项目根路径
+        String rootPath = AppConstant.CODE_OUT_DIR + File.separator + appDetail.getCodeType() + "_" + id;
+        String downloadName = IdUtil.simpleUUID();
+        codeDownloadService.codeDownload(rootPath, downloadName, response);
     }
 }

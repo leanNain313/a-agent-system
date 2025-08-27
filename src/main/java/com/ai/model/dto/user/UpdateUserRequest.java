@@ -30,4 +30,10 @@ public class UpdateUserRequest {
      */
     @Schema(description = "用户角色(可选)")
     private String userRole;
+
+    /**
+     * 用户头像路由
+     */
+    @Schema(description = "用户头像路由(可选)")
+    private String userAvatar;
 }

@@ -42,7 +42,7 @@ public class AiCodeGeneratorServiceFactory {
     private ChatHistoryService chatHistoryService;
 
     // 最大会话记忆轮数
-    private static final int MAX_COUNT = 20;
+    private static final int MAX_COUNT = 50;
 
 
     /**

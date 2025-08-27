@@ -13,7 +13,7 @@ public enum ErrorCode {
     ACCOUNT_ERROR(40003, "账户重复", "校验账户是否重"),
     PASSWORD_ERROR(40004, "密码错误", "校验账户密码是否正确"),
     PASSWORD_REPEAT_ERROR(40005, "两次密码输入不一致", "校验密码"),
-    NO_LOGIN(40100, "未登录", "未登录"),
+    NO_LOGIN(40100, "请检查您的登录", "没有登陆或者登录过期"),
     NO_AUTH(40101, " 权限不足", "权限不足"),
     SYSTEM_ERROR(50000, "系统内部异常", "服务器出错"),
     ACCOUNT_DISABLE_ERROR(40007, "账户被封禁", ""),
