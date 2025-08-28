@@ -54,7 +54,7 @@ public class AppController {
     @PostMapping("/create")
     @Operation(summary = "用户创建应用")
     @SaCheckPermission(UserPermissionConstant.AI_USER)
-    public BaseResponse<String> createApp(@RequestBody AppCreateRequest request) {
+    public BaseResponse<AppVO> createApp(@RequestBody AppCreateRequest request) {
         if (request == null || StrUtil.isBlank(request.getInitPrompt())) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -62,8 +62,8 @@ public class AppController {
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NO_LOGIN);
         }
-        Long id = appService.createApp(request, loginUser.getId());
-        return ResultUtils.success(id.toString());
+        AppVO appVO = appService.createApp(request, loginUser.getId());
+        return ResultUtils.success(appVO);
     }
 
     /**

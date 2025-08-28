@@ -72,7 +72,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     private AiSmartRouterGeneratorService aiSmartRouterGeneratorService;
 
     @Override
-    public Long createApp(AppCreateRequest request, Long loginUserId) {
+    public AppVO createApp(AppCreateRequest request, Long loginUserId) {
         if (request == null || loginUserId == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -95,7 +95,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         app.setUpdateTime(new Date());
         boolean saved = this.save(app);
         ThrowUtils.throwIf(!saved, ErrorCode.SYSTEM_ERROR, "创建失败");
-        return app.getId();
+        AppVO appVO = BeanUtil.copyProperties(app, AppVO.class);
+        return appVO;
     }
 
     @Override

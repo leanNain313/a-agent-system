@@ -4,10 +4,12 @@ import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.ai.tools.FileWriteTool;
+import com.ai.ai.tools.ToolManager;
 import com.ai.service.ChatHistoryService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -40,6 +42,9 @@ public class AiCodeGeneratorServiceFactory {
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ToolManager toolManager;
 
     // 最大会话记忆轮数
     private static final int MAX_COUNT = 50;
@@ -91,7 +96,12 @@ public class AiCodeGeneratorServiceFactory {
                     .chatModel(chatModel)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> messageWindowChatMemory) // 构建会会话记忆, 使用@Merory注解时必须这样构建
-                    .tools(new FileWriteTool())
+                    .tools(toolManager.getAllTools())
+                    // 处理工具调用幻觉问题
+                    .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                            ToolExecutionResultMessage.from(toolExecutionRequest,
+                                    "Error: there is no tool called " + toolExecutionRequest.name())
+                    )
                     .build();
             case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
                     .chatModel(chatModel)

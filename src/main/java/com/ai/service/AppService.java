@@ -17,7 +17,7 @@ import reactor.core.publisher.Flux;
 public interface AppService extends IService<App> {
 
     /** 用户创建应用（需填写 initPrompt） */
-    Long createApp(AppCreateRequest request, Long loginUserId);
+    AppVO createApp(AppCreateRequest request, Long loginUserId);
 
     /** 用户按 id 修改自己的应用（仅名称） */
     void updateMyAppById(AppUpdateByUserRequest request, Long loginUserId);
