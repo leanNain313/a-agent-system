@@ -25,6 +25,17 @@ spring:
           # 连接池中的最小空闲连接
           min-idle: 0
       database: 3
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: <你的邮箱>@qq.com
+    password: <你的授权码>
+    default-encoding: UTF-8
+    properties:
+      smtp:
+        auth: true
+      starttls:
+        enable: true
 server:
   port: 8123
   servlet:
@@ -75,7 +86,7 @@ knife4j:
 langchain4j:
   open-ai:
     chat-model:
-      base-url: https://api.deepseek.com
+      base-url: <你的模型地址>
       api-key: <你的api密钥>
       model-name: deepseek-chat
       log-requests: true
@@ -84,9 +95,23 @@ langchain4j:
 #      strict-json-schema: true
 #      response-format: json_object
     streaming-chat-model:
-      base-url: https://api.deepseek.com
+      base-url: <你的模型地址>
       api-key: <你的api密钥>
       model-name: deepseek-chat
       log-requests: true
       log-responses: true
       max-tokens: 8192
+cos:
+  client:
+    host: <你的端口>
+    secretId: <你的密钥>
+    secretKey: <你的密钥>
+    region: <你的地域>
+    bucket: <你的桶>
+pexels:
+  api-key: <你的密钥>
+
+dashscope:
+  api-key: <你的阿里云百炼密钥>
+  image-model: <你的阿里云百炼文生图模型>
+

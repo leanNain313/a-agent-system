@@ -8,6 +8,8 @@ import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
+
 public interface AiCodeGeneratorService {
 
     /**
@@ -37,7 +39,6 @@ public interface AiCodeGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/vue_project.md")
     TokenStream generateVueProjectCode(@MemoryId Long appId, @UserMessage String userMessage);
-
 
     @SystemMessage(fromResource = "prompt/html.txt")
     HtmlCodeResult codeTest(@UserMessage String userMessage);
