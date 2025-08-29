@@ -37,4 +37,6 @@ public interface UserService extends IService<User> {
 
     UserVO getUserDetailById(Long id);
 
+    void disabledHandle(long disableTime);
+
 }

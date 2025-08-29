@@ -7,7 +7,8 @@ import lombok.Getter;
 public enum DisabledTypeEnum {
 
     SEED_MESSAGE_TYPE("向Ai发送信息", "seed_message"),
-    DEPLOY_TYPE("向Ai发送信息", "deploy");
+    DEPLOY_TYPE("网页部署", "deploy"),
+    FILE_UPLOAD_TYPE("文件上传", "file_upload");
 
     private final String text;
 

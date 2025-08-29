@@ -1,6 +1,7 @@
 package com.ai.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.IdUtil;
@@ -9,11 +10,16 @@ import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.common.BaseResponse;
 import com.ai.common.ResultUtils;
+import com.ai.contant.UserConstant;
 import com.ai.manager.auth.model.UserPermissionConstant;
 import com.ai.manager.cos.CosManager;
+import com.ai.model.enums.DisabledTypeEnum;
+import com.ai.model.vo.user.UserVO;
+import com.ai.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -33,11 +39,21 @@ public class FileOperateController {
     @Resource
     private CosManager cosManager;
 
+    @Resource
+    private UserService userService;
+
     @PostMapping("/upload")
     @SaCheckPermission(UserPermissionConstant.AI_USER)
     @Operation(summary = "上传用户头像")
     public BaseResponse<String> uploadFile(@RequestPart("file") MultipartFile file) {
         ThrowUtils.throwIf(file.isEmpty(), ErrorCode.NULL_ERROR);
+        // 校验该功能是否被封禁
+        UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
+        if (StpUtil.isDisable(userVO.getId())) {
+            long disableTime = StpUtil.getDisableTime(userVO.getId(), DisabledTypeEnum.FILE_UPLOAD_TYPE.getValue());
+            userService.disabledHandle(disableTime);
+        }
         String contentType = file.getContentType();
         String substring = "." + contentType.substring(contentType.length() - 4);
         String filePath = String.format("/avatar/%s", IdUtil.fastSimpleUUID() + substring);

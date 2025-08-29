@@ -81,8 +81,8 @@ public class UserVO {
     /**
      * 是否被封禁
      */
-    @Schema(description = "是否被封禁")
-    private Boolean isDisabled;
+    @Schema(description = "账户封禁状态")
+    private AccountFunctionStateVO accountFunctionStateVO;
 
     /**
      * 此次会话的token

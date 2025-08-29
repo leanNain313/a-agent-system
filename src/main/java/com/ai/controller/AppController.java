@@ -17,16 +17,19 @@ import com.ai.contant.AppConstant;
 import com.ai.contant.UserConstant;
 import com.ai.manager.auth.model.UserPermissionConstant;
 import com.ai.model.dto.app.*;
+import com.ai.model.enums.DisabledTypeEnum;
 import com.ai.model.vo.app.AppVO;
 import com.ai.model.vo.user.UserVO;
 import com.ai.service.AppService;
 import com.ai.service.CodeDownloadService;
+import com.ai.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Random;
 
@@ -47,6 +52,9 @@ public class AppController {
 
     @Resource
     private CodeDownloadService codeDownloadService;
+
+    @Resource
+    private UserService userService;
 
     /**
      * 用户创建应用（须填写 initPrompt）
@@ -218,6 +226,11 @@ public class AppController {
         ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(request.getCodeType()) == null, ErrorCode.PARAMS_ERROR);
         UserVO loginUser = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_LOGIN);
+        // 判断当前用户该功能是否被封禁
+        if (StpUtil.isDisable(loginUser.getId(), DisabledTypeEnum.SEED_MESSAGE_TYPE.getValue())) {
+            long disableTime = StpUtil.getDisableTime(loginUser.getId());
+            userService.disabledHandle(disableTime);
+        }
         Flux<String> stringFlux = appService.chatGenerateCode(request, loginUser.getId());
         return stringFlux.map(chunk -> {
             // 分装返回内容
@@ -244,6 +257,11 @@ public class AppController {
         ThrowUtils.throwIf(id == null, ErrorCode.NULL_ERROR);
         UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
         ThrowUtils.throwIf(userVO == null || StrUtil.isBlank(codeType), ErrorCode.NO_LOGIN);
+        // 判断当前用户该功能是否被封禁
+        if (StpUtil.isDisable(userVO.getId(), DisabledTypeEnum.DEPLOY_TYPE.getValue())) {
+            long disableTime = StpUtil.getDisableTime(userVO.getId());
+            userService.disabledHandle(disableTime);
+        }
         CodeGenTypeEnum enumByValue = CodeGenTypeEnum.getEnumByValue(codeType);
         ThrowUtils.throwIf(enumByValue == null, ErrorCode.NULL_ERROR);
         String url = appService.deployWeb(id, userVO, enumByValue);

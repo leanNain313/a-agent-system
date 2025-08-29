@@ -17,6 +17,7 @@ import com.ai.model.entity.User;
 import com.ai.model.enums.AuthCodeType;
 import com.ai.model.enums.DeviceTypeEnum;
 import com.ai.model.enums.DisabledTypeEnum;
+import com.ai.model.vo.user.AccountFunctionStateVO;
 import com.ai.model.vo.user.UserVO;
 import com.ai.service.EmailService;
 import com.ai.service.UserService;
@@ -33,6 +34,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -153,7 +156,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 检查账户是否被封禁
         if (StpUtil.isDisable(user.getId())) {
-            throw new BusinessException(ErrorCode.ACCOUNT_DISABLE_ERROR);
+            long disableTime = StpUtil.getDisableTime(user.getId());
+            this.disabledHandle(disableTime);
         }
         UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
         // 记录用户登录状态
@@ -279,7 +283,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
-     * 获去用户列表
+     * 获取用户列表
      * @param userPageRequest 请求参数
      * @return 返回分页列表
      */
@@ -296,7 +300,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         List<User> records = page.getRecords();
         List<UserVO> userVOList = BeanUtil.copyToList(records, UserVO.class);
         // 查询账户封禁状态
-        List<UserVO> collect = userVOList.stream().peek(userVO -> userVO.setIsDisabled(StpUtil.isDisable(userVO.getId()))).collect(Collectors.toList());
+        List<UserVO> collect = userVOList.stream().peek(userVO -> userVO.setAccountFunctionStateVO(paramBuild(userVO.getId())))
+                .collect(Collectors.toList());
         ResultPage<UserVO> resultPage = new ResultPage<>();
         resultPage.setData(collect);
         resultPage.setTotal(page.getTotal());
@@ -350,6 +355,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
+     * 账户部分功能封禁处理
+     * @param disableTime 封禁剩余时间
+     */
+    @Override
+    public void disabledHandle(long disableTime) {
+        ThrowUtils.throwIf(disableTime == -1, ErrorCode.FUNCTION_DISABLE_ERROR, "该功能被永久封禁，如有疑问请联系管理员");
+        LocalDateTime now = LocalDateTime.now();
+        // 加上封禁时间
+        LocalDateTime localDateTime = now.plusSeconds(disableTime);
+        // 定义格式化器
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String time = localDateTime.format(dateTimeFormatter);
+        String message = String.format("该功能已被封禁， 解除时间为:%s, 如有疑问请联系管理员", time);
+        throw new BusinessException(ErrorCode.FUNCTION_DISABLE_ERROR, message);
+    }
+
+    /**
      * 根据id获取用户详情
      * @param id 用户id
      */
@@ -360,7 +382,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         User user = this.getById(id);
         ThrowUtils.throwIf(user == null, ErrorCode.SYSTEM_ERROR, "不存在该用户");
-        return BeanUtil.copyProperties(user, UserVO.class);
+        UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
+        userVO.setAccountFunctionStateVO(paramBuild(userVO.getId()));
+        return userVO;
+    }
+
+    private AccountFunctionStateVO paramBuild(Long id) {
+        return AccountFunctionStateVO.builder()
+                .allFunction(StpUtil.isDisable(id)) // 所有功能
+                .aiFunction(StpUtil.isDisable(id, DisabledTypeEnum.SEED_MESSAGE_TYPE.getValue())) // ai功能
+                .deployFunction(StpUtil.isDisable(id, DisabledTypeEnum.DEPLOY_TYPE.getValue())) // 部署功能
+                .fileUpLoadFunction(StpUtil.isDisable(id, DisabledTypeEnum.FILE_UPLOAD_TYPE.getValue())) // 文件上传
+                .allFunctionTime(StpUtil.getDisableTime(id))
+                .aiFunctionTime(StpUtil.getDisableTime(id, DisabledTypeEnum.SEED_MESSAGE_TYPE.getValue()))
+                .deployFunctionTime(StpUtil.getDisableTime(id, DisabledTypeEnum.DEPLOY_TYPE.getValue()))
+                .fileUpLoadFunctionTime(StpUtil.getDisableTime(id, DisabledTypeEnum.FILE_UPLOAD_TYPE.getValue()))
+                .build();
     }
 
     /**

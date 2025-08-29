@@ -32,10 +32,11 @@ spring:
     password: <你的授权码>
     default-encoding: UTF-8
     properties:
-      smtp:
-        auth: true
-      starttls:
-        enable: true
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+          starttls.required: true
 server:
   port: 8123
   servlet:
