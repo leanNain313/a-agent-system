@@ -187,7 +187,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.DATA_RULE_ERROR);
         }
         // 校验验证码的有效性
-        String code = emailService.getEmailCode(registerRequest.getUserAccount(), AuthCodeType.REGISTER_CODE.getValue());
+        String code = emailService.getEmailCode(registerRequest.getUserAccount(), AuthCodeType.RESET_CODE.getValue());
         if (StrUtil.isEmpty(code)) {
             throw new BusinessException(ErrorCode.CODE_OVERDUE_ERROR);
         }

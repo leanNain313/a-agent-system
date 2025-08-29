@@ -67,7 +67,7 @@ public class UserController {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        userService.register(userRegisterRequest);
+        userService.resetPassword(userRegisterRequest);
         return ResultUtils.success();
     }
 
