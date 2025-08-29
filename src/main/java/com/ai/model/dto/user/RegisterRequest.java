@@ -12,7 +12,7 @@ public class RegisterRequest implements Serializable {
     /**
      * 账户
      */
-    @Schema(description = "账户(必须)")
+    @Schema(description = "邮箱(必须)")
     private String userAccount;
 
     /**
@@ -26,4 +26,7 @@ public class RegisterRequest implements Serializable {
      */
     @Schema(description = "二次检验密码(必须)")
     private String checkPassword;
+
+    @Schema(description = "验证码")
+    private String code;
 }

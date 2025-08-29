@@ -18,7 +18,10 @@ public enum ErrorCode {
     SYSTEM_ERROR(50000, "系统内部异常", "服务器出错"),
     ACCOUNT_DISABLE_ERROR(40007, "账户被封禁", ""),
     FUNCTION_DISABLE_ERROR(40008, "该功能被封禁", ""),
-    PROJECT_BUILD_ERROR(40009, "项目构建失败", "检查代码, 以及依赖");
+    PROJECT_BUILD_ERROR(40009, "项目构建失败", "检查代码, 以及依赖"),
+    CODE_SEND_ERROR(40011, "验证码发送失败", "验证码发送失败"),
+    CODE_ERROR(40012, "验证码错误", "验证码错误"),
+    CODE_OVERDUE_ERROR(400010, "验证码已过期", "验证码过期， 或者根本不存在");
 
     /**
      * 错误状态码

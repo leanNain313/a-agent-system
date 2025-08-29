@@ -8,27 +8,36 @@ import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.common.ResultPage;
+import com.ai.contant.RedisConstant;
 import com.ai.contant.UserConstant;
 import com.ai.manager.cos.CosManager;
 import com.ai.mapper.UserMapper;
 import com.ai.model.dto.user.*;
 import com.ai.model.entity.User;
+import com.ai.model.enums.AuthCodeType;
 import com.ai.model.enums.DeviceTypeEnum;
 import com.ai.model.enums.DisabledTypeEnum;
 import com.ai.model.vo.user.UserVO;
+import com.ai.service.EmailService;
 import com.ai.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,6 +55,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Resource
     private CosManager cosManager;
 
+    @Resource
+    private EmailService emailService;
+
+
     /**
      * 注册
      */
@@ -55,9 +68,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 不得为空
         if (StrUtil.isBlank(registerRequest.getUserAccount()) ||
                 StrUtil.isBlank(registerRequest.getUserPassword()) ||
-                StrUtil.isBlank(registerRequest.getCheckPassword())
+                StrUtil.isBlank(registerRequest.getCheckPassword()) ||
+                StrUtil.isBlank(registerRequest.getCode())
         ) {
-            throw new BusinessException(ErrorCode.DATA_RULE_ERROR);
+            throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         // 账户不得少于4位
         if (registerRequest.getUserAccount().length() < 4) {
@@ -77,6 +91,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!registerRequest.getUserPassword().equals(registerRequest.getCheckPassword())) {
             throw new BusinessException(ErrorCode.DATA_RULE_ERROR);
         }
+        // 校验验证码的有效性
+        String code = emailService.getEmailCode(registerRequest.getUserAccount(), AuthCodeType.REGISTER_CODE.getValue());
+        if (StrUtil.isEmpty(code)) {
+            throw new BusinessException(ErrorCode.CODE_OVERDUE_ERROR);
+        }
+        // 校验验证码是否正确
+        if (!code.equals(registerRequest.getCode())) {
+            throw new BusinessException(ErrorCode.CODE_ERROR);
+        }
         // 判断账户是否重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_account", registerRequest.getUserAccount());
@@ -93,7 +116,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
-        log.info("注册用户的名为: " + registerRequest.getUserAccount());
+        log.info("注册用户的邮箱名为: " + registerRequest.getUserAccount());
     }
 
     @Override
@@ -143,6 +166,48 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         log.info("登录用户id：{}， 登录设备类型：{}, token:{}", user.getId(), loginRequest.getDeviceType(), tokenInfo.getTokenValue());
         userVO.setToken(tokenInfo.getTokenValue());
         return userVO;
+    }
+
+    @Override
+    public void resetPassword(RegisterRequest registerRequest) {
+        // 不得为空
+        if (StrUtil.isBlank(registerRequest.getUserAccount()) ||
+                StrUtil.isBlank(registerRequest.getUserPassword()) ||
+                StrUtil.isBlank(registerRequest.getCheckPassword()) ||
+                StrUtil.isBlank(registerRequest.getCode())
+        ) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        // 密码不得少于8位
+        if (registerRequest.getUserPassword().length() < 8) {
+            throw new BusinessException(ErrorCode.DATA_RULE_ERROR);
+        }
+        // 两次密码输入相同
+        if (!registerRequest.getUserPassword().equals(registerRequest.getCheckPassword())) {
+            throw new BusinessException(ErrorCode.DATA_RULE_ERROR);
+        }
+        // 校验验证码的有效性
+        String code = emailService.getEmailCode(registerRequest.getUserAccount(), AuthCodeType.REGISTER_CODE.getValue());
+        if (StrUtil.isEmpty(code)) {
+            throw new BusinessException(ErrorCode.CODE_OVERDUE_ERROR);
+        }
+        // 校验验证码是否正确
+        if (!code.equals(registerRequest.getCode())) {
+            throw new BusinessException(ErrorCode.CODE_ERROR);
+        }
+        boolean exists = this.lambdaQuery()
+                .eq(User::getUserAccount, registerRequest.getUserAccount())
+                .exists();
+        ThrowUtils.throwIf(!exists, ErrorCode.SYSTEM_ERROR, "账户不存在");
+        String handledPassword = this.handlePassword(registerRequest.getUserPassword());
+        UpdateWrapper<User> queryWrapper = new UpdateWrapper<>();
+        queryWrapper.eq("user_account", registerRequest.getUserAccount());
+        queryWrapper.set("user_password", handledPassword);
+        User user = BeanUtil.copyProperties(registerRequest, User.class);
+        user.setUserPassword(handledPassword);
+        boolean update = this.update(user, queryWrapper);
+        ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "重置失败");
+
     }
 
     /**

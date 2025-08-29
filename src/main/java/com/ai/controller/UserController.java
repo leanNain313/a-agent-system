@@ -14,13 +14,18 @@ import com.ai.common.ResultUtils;
 import com.ai.contant.UserConstant;
 import com.ai.manager.auth.model.UserPermissionConstant;
 import com.ai.model.dto.user.*;
+import com.ai.model.enums.AuthCodeType;
 import com.ai.model.vo.user.UserVO;
+import com.ai.service.EmailService;
 import com.ai.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Email;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.util.StringUtil;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,14 +36,16 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "用户接口")
 public class UserController {
 
-    @Autowired
+    @Resource
     private UserService userService;
+
+    @Resource
+    private EmailService emailService;
 
 
     /**
      * 用户注册
      * @param userRegisterRequest 请求封装
-     * @return 1成功 0失败
      */
     @PostMapping("/register")
     @Operation(summary = "用户注册")
@@ -47,6 +54,37 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         userService.register(userRegisterRequest);
+        return ResultUtils.success();
+    }
+
+    /**
+     * 用户注册
+     * @param userRegisterRequest 请求封装
+     */
+    @PostMapping("/reset")
+    @Operation(summary = "重置密码")
+    public BaseResponse<Object> userResetPassword(@RequestBody RegisterRequest userRegisterRequest) {
+        if (userRegisterRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        userService.register(userRegisterRequest);
+        return ResultUtils.success();
+    }
+
+    @Operation(summary = "发送验证码，有效期5分钟")
+    @PostMapping("/code")
+    public BaseResponse<Object> send(@Parameter(description = "邮箱") @Email String email, @Parameter(description = "验证码类型：" +
+            "'login', 'register', 'reset'") String type) {
+        ThrowUtils.throwIf(StrUtil.isBlank(email) || StrUtil.isBlank(type), ErrorCode.NULL_ERROR);
+        ThrowUtils.throwIf(AuthCodeType.getEnumByValue(type) == null, ErrorCode.PARAMS_ERROR);
+        // 防止刷验证码
+        String emailCode = emailService.getEmailCode(email, type);
+        if (!StrUtil.isBlank(emailCode)) {
+            Long codeExpire = emailService.getCodeExpire(email, type);
+            ThrowUtils.throwIf(codeExpire.compareTo(240L) > 0, ErrorCode.SYSTEM_ERROR, "操作频繁， 请稍后重试");
+        }
+        boolean b = emailService.sendEmailCode(email, type);
+        ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "验证码发送失败");
         return ResultUtils.success();
     }
 
@@ -66,6 +104,8 @@ public class UserController {
         log.info("登录用户账户：{}", result.getUserAccount());
         return ResultUtils.success(result);
     }
+
+
 
     /**
      * 获取当前登录用户信息

@@ -19,6 +19,8 @@ public interface UserService extends IService<User> {
 
     UserVO doLogin(LoginRequest loginRequest , HttpServletRequest request);
 
+    void resetPassword(RegisterRequest registerRequest);
+
     void loginOut(HttpServletRequest request);
 
     void updateUserByAdmin(UpdateUserRequest updateUserRequest);
