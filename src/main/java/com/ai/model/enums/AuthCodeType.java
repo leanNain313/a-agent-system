@@ -8,6 +8,7 @@ public enum AuthCodeType {
 
     LOGIN_CODE("登录验证码", "login"),
     REGISTER_CODE("注册验证码", "register"),
+    TWO_AUTH_CODE("二级校验验证码", "twoAuth"),
     RESET_CODE("重置密码验证码", "reset");
 
     private final String text;

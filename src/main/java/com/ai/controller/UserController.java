@@ -73,8 +73,8 @@ public class UserController {
 
     @Operation(summary = "发送验证码，有效期5分钟")
     @PostMapping("/code")
-    public BaseResponse<Object> send(@Parameter(description = "邮箱") @Email String email, @Parameter(description = "验证码类型：" +
-            "'login', 'register', 'reset'") String type) {
+    public BaseResponse<Object> send(@Parameter(description = "邮箱") @Email(message = "邮箱格式错误") String email, @Parameter(description = "验证码类型：" +
+            "'login', 'register', 'reset', 'twoAuth'") String type) {
         ThrowUtils.throwIf(StrUtil.isBlank(email) || StrUtil.isBlank(type), ErrorCode.NULL_ERROR);
         ThrowUtils.throwIf(AuthCodeType.getEnumByValue(type) == null, ErrorCode.PARAMS_ERROR);
         // 防止刷验证码
@@ -85,6 +85,15 @@ public class UserController {
         }
         boolean b = emailService.sendEmailCode(email, type);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "验证码发送失败");
+        return ResultUtils.success();
+    }
+
+    @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
+    @PostMapping("/auth")
+    @Operation(summary = "二级校验， 验证是本人在进行操作")
+    public BaseResponse<Object> twoAuth(@Parameter(description = "验证码") String code) {
+        ThrowUtils.throwIf(StrUtil.isEmpty(code), ErrorCode.NULL_ERROR);
+        userService.AuthLevelToTwo(code);
         return ResultUtils.success();
     }
 
@@ -129,7 +138,7 @@ public class UserController {
     @PostMapping("/loginOut")
     @Operation(summary = "退出登录")
     public BaseResponse<Object> loginOut(HttpServletRequest request) {
-        userService.loginOut(request);
+        userService.loginOut();
         return ResultUtils.success();
     }
 
@@ -178,7 +187,6 @@ public class UserController {
      * 移除用户
      *
      * @param id 用户id
-     * @return
      */
     @PostMapping("/delete")
     @Operation(summary = "删除用户(管理员)")

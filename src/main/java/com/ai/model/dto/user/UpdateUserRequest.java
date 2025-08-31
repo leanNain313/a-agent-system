@@ -16,7 +16,7 @@ public class UpdateUserRequest {
     /**
      * 密码
      */
-    @Schema(description = "密码， 不得少于8位， 不得包含特殊字符(必须)")
+    @Schema(description = "密码， 不得少于8位， 不得包含特殊字符(可选)")
     private String userPassword;
 
     /**

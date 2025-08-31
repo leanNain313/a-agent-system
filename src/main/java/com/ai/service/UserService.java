@@ -21,7 +21,7 @@ public interface UserService extends IService<User> {
 
     void resetPassword(RegisterRequest registerRequest);
 
-    void loginOut(HttpServletRequest request);
+    void loginOut();
 
     void updateUserByAdmin(UpdateUserRequest updateUserRequest);
 
@@ -39,4 +39,5 @@ public interface UserService extends IService<User> {
 
     void disabledHandle(long disableTime);
 
+    void AuthLevelToTwo(String code);
 }

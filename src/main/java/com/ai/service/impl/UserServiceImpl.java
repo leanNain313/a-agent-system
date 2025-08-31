@@ -199,10 +199,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!code.equals(registerRequest.getCode())) {
             throw new BusinessException(ErrorCode.CODE_ERROR);
         }
-        boolean exists = this.lambdaQuery()
+        User exists = this.lambdaQuery()
                 .eq(User::getUserAccount, registerRequest.getUserAccount())
-                .exists();
-        ThrowUtils.throwIf(!exists, ErrorCode.SYSTEM_ERROR, "账户不存在");
+                .one();
+        ThrowUtils.throwIf(exists == null, ErrorCode.SYSTEM_ERROR, "账户不存在");
         String handledPassword = this.handlePassword(registerRequest.getUserPassword());
         UpdateWrapper<User> queryWrapper = new UpdateWrapper<>();
         queryWrapper.eq("user_account", registerRequest.getUserAccount());
@@ -211,23 +211,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserPassword(handledPassword);
         boolean update = this.update(user, queryWrapper);
         ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "重置失败");
-
+        // 注销原有的登录状态
+        StpUtil.logout(exists.getId());
     }
 
     /**
      * 登出
      */
     @Override
-    public void loginOut(HttpServletRequest request) {
-        UserVO userVO = (UserVO) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATUS);
-        ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
+    public void loginOut() {
         // 去除token
-        StpUtil.kickout(userVO.getId());
-        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATUS);
+        StpUtil.logout();
     }
 
     /**
-     * 修改用户信息
+     * 管理员修改用户信息
      * @param updateUserRequest 修改用户信息
      */
     @Override
@@ -248,17 +246,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         boolean update = this.update(user, queryWrapper);
         ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "修改失败");
+        // 密码修改移除登录状态
+        if (!StrUtil.isEmpty(updateUserRequest.getUserPassword())) {
+            StpUtil.logout(updateUserRequest.getId());
+        }
     }
 
     /**
-     * 管理员修改用户信息
+     * 修改用户信息
      * @param updateUserRequest 参数
      */
     @Override
     public void updateUserByUser(UpdateUserRequest updateUserRequest) {
         // 对密码进行加密储存
-        String handledPassword = this.handlePassword(updateUserRequest.getUserPassword());
-        updateUserRequest.setUserPassword(handledPassword);
+        if (!StrUtil.isBlank(updateUserRequest.getUserPassword())) {
+            String handledPassword = this.handlePassword(updateUserRequest.getUserPassword());
+            updateUserRequest.setUserPassword(handledPassword);
+        }
         User byId = this.getById(updateUserRequest.getId());
         ThrowUtils.throwIf(byId == null, ErrorCode.SYSTEM_ERROR, "该用户不存在");
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -270,6 +274,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         boolean update = this.update(user, queryWrapper);
         ThrowUtils.throwIf(!update, ErrorCode.SYSTEM_ERROR, "修改失败");
+        // 密码修改移除登录状态
+        if (!StrUtil.isEmpty(updateUserRequest.getUserPassword())) {
+            StpUtil.logout(updateUserRequest.getId());
+        }
     }
 
     /**
@@ -277,9 +285,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public void removeUserById(Long id, HttpServletRequest request) {
-        this.loginOut(request);
+        // 校验二级认证
+        ThrowUtils.throwIf(!StpUtil.isSafe(), ErrorCode.AUTH_ERROR);
         boolean remove = this.removeById(id);
         ThrowUtils.throwIf(!remove, ErrorCode.SYSTEM_ERROR, "删除失败");
+        // 移除登录状态
+        StpUtil.logout(id);
     }
 
     /**
@@ -372,6 +383,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
+     * 二级校验
+     * @param code 验证码
+     */
+    @Override
+    public void AuthLevelToTwo(String code) {
+        ThrowUtils.throwIf(StrUtil.isBlank(code), ErrorCode.NULL_ERROR);
+        UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
+        ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
+        String emailCode = emailService.getEmailCode(userVO.getUserAccount(), code);
+        ThrowUtils.throwIf(StrUtil.isEmpty(emailCode), ErrorCode.CODE_OVERDUE_ERROR);
+        ThrowUtils.throwIf(!emailCode.equals(code), ErrorCode.CODE_ERROR);
+    }
+
+    /**
      * 根据id获取用户详情
      * @param id 用户id
      */
@@ -387,6 +412,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return userVO;
     }
 
+    /**
+     * 参数构建
+     * @param id 用户id
+     * @return 返回实体类
+     */
     private AccountFunctionStateVO paramBuild(Long id) {
         return AccountFunctionStateVO.builder()
                 .allFunction(StpUtil.isDisable(id)) // 所有功能
@@ -407,4 +437,5 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return DigestUtils.md5DigestAsHex((UserConstant.USER_PASSWORD_SALT +password)
                 .getBytes(StandardCharsets.UTF_8));
     }
+
 }
