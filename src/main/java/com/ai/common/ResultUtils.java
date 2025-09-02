@@ -3,12 +3,14 @@ package com.ai.common;
 
 import com.ai.Exception.ErrorCode;
 
+import java.io.Serializable;
+
 /**
  * 返回封装工具类
  *
  * @Author laiqi
  */
-public class ResultUtils {
+public class ResultUtils implements Serializable {
 
     /**
      * 成功

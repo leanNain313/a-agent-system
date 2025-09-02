@@ -1,6 +1,6 @@
 package com.ai.manager.cos;
 
-import com.ai.config.CosClientConfig;
+import com.ai.manager.cos.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;

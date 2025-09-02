@@ -3,9 +3,11 @@ package com.ai.ai.service;
 import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.ai.enums.CodeGenTypeEnum;
-import com.ai.ai.tools.FileWriteTool;
+import com.ai.ai.guardail.PromptSafetyInputGuardrail;
+import com.ai.ai.guardail.RetryOutputGuardrail;
 import com.ai.ai.tools.ToolManager;
 import com.ai.service.ChatHistoryService;
+import com.ai.utils.SpringContextUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
@@ -28,14 +30,8 @@ import java.time.Duration;
 @Slf4j
 public class AiCodeGeneratorServiceFactory {
 
-    @Resource
+    @Resource(name = "routingChatModelPrototype")
     private ChatModel chatModel;
-
-    @Resource(name = "openAiStreamingChatModel")
-    private StreamingChatModel openAiStreamingChatModel;
-
-    @Resource(name = "reasoningStreamingChatModel")
-    private StreamingChatModel reasoningStreamingChatModel;
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
@@ -92,22 +88,31 @@ public class AiCodeGeneratorServiceFactory {
 //         从数据库中加载会话记忆
         chatHistoryService.loadDataToChatMemory(appId, messageWindowChatMemory, MAX_COUNT);
         return switch (codeGenTypeEnum) {
-            case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
+            case VUE_PROJECT -> {
+                StreamingChatModel seniorStreamingChatModelPrototype = SpringContextUtil.getBean("seniorStreamingChatModelPrototype", StreamingChatModel.class);
+                yield AiServices.builder(AiCodeGeneratorService.class)
+                        .chatModel(chatModel)
+                        .streamingChatModel(seniorStreamingChatModelPrototype)
+                        .chatMemoryProvider(memoryId -> messageWindowChatMemory) // 构建会会话记忆, 使用@Merory注解时必须这样构建
+                        .tools(toolManager.getAllTools())
+                        // 处理工具调用幻觉问题
+                        .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                                ToolExecutionResultMessage.from(toolExecutionRequest,
+                                        "Error: there is no tool called " + toolExecutionRequest.name())
+                        )
+                        .inputGuardrails(new PromptSafetyInputGuardrail()) // 输入护轨， 防止用户恶意攻击
+//                        .outputGuardrails(new RetryOutputGuardrail()) // 输出护轨， 但是可能造成无法流式输出
+                        .build();
+            }
+
+            case HTML, MULTI_FILE -> {
+                    StreamingChatModel streamingChatModelPrototype = SpringContextUtil.getBean("reasoningStreamingChatModel", StreamingChatModel.class);
+                    yield  AiServices.builder(AiCodeGeneratorService.class)
                     .chatModel(chatModel)
-                    .streamingChatModel(reasoningStreamingChatModel)
-                    .chatMemoryProvider(memoryId -> messageWindowChatMemory) // 构建会会话记忆, 使用@Merory注解时必须这样构建
-                    .tools(toolManager.getAllTools())
-                    // 处理工具调用幻觉问题
-                    .hallucinatedToolNameStrategy(toolExecutionRequest ->
-                            ToolExecutionResultMessage.from(toolExecutionRequest,
-                                    "Error: there is no tool called " + toolExecutionRequest.name())
-                    )
-                    .build();
-            case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
-                    .chatModel(chatModel)
-                    .streamingChatModel(openAiStreamingChatModel)
+                    .streamingChatModel(streamingChatModelPrototype)
                     .chatMemory(messageWindowChatMemory)
                     .build();
+            }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持该类型代码生成");
         };
     }

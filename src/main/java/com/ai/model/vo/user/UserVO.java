@@ -5,11 +5,12 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @Schema(description = "登录用户信息")
-public class UserVO {
+public class UserVO implements Serializable {
 
     /**
      * id

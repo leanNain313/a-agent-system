@@ -22,6 +22,7 @@ public enum ErrorCode {
     CODE_SEND_ERROR(40011, "验证码发送失败", "验证码发送失败"),
     CODE_ERROR(40012, "验证码错误", "验证码错误"),
     AUTH_ERROR(40013, "二级验证失败", "进行二级认证，防止重要数据误删"),
+    REPEAT_OPERATE_ERROR(40014, "请不重复操作， 请稍后重试", "操作频繁"),
     CODE_OVERDUE_ERROR(400010, "验证码已过期", "验证码过期， 或者根本不存在");
 
     /**

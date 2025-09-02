@@ -13,6 +13,7 @@ import com.ai.ai.core.AiCodeGeneratorFacade;
 import com.ai.ai.core.StreamHandlerExecutor;
 import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.ai.service.AiCodeGeneratorService;
+import com.ai.ai.service.AiSmartRouterGeneratorFactory;
 import com.ai.ai.service.AiSmartRouterGeneratorService;
 import com.ai.common.ResultPage;
 import com.ai.contant.AppConstant;
@@ -71,7 +72,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     private ScreenshotService screenshotService;
 
     @Resource
-    private AiSmartRouterGeneratorService aiSmartRouterGeneratorService;
+    private AiSmartRouterGeneratorFactory aiSmartRouterGeneratorFactory;
 
     @Override
     public AppVO createApp(AppCreateRequest request, Long loginUserId) {
@@ -84,7 +85,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         if (StrUtil.isBlank(request.getAppName())) {
             request.setAppName("新建应用");
         }
-        // ai智能选择生成模式
+        // ai智能选择生成模式, 创建一个服务实例
+        AiSmartRouterGeneratorService aiSmartRouterGeneratorService = aiSmartRouterGeneratorFactory.createAiSmartRouterGeneratorService();
         CodeGenTypeEnum codeGenTypeEnum = aiSmartRouterGeneratorService.smartRouterSelect(request.getInitPrompt());
         ThrowUtils.throwIf(codeGenTypeEnum == null, ErrorCode.SYSTEM_ERROR, "ai对话初始化失败");
         ThrowUtils.throwIf(CodeGenTypeEnum.getEnumByValue(codeGenTypeEnum.getValue()) == null, ErrorCode.SYSTEM_ERROR,  "ai对话初始化失败");

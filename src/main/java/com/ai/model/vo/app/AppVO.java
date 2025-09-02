@@ -6,11 +6,12 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @Schema(description = "应用返回体")
-public class AppVO {
+public class AppVO implements Serializable {
 
     @Schema(description = "应用id")
     @JsonSerialize(using = ToStringSerializer.class)

@@ -4,11 +4,12 @@ package com.ai.common;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
 @Schema(description = "返回结果封装类")
-public class  ResultPage <T> {
+public class ResultPage <T> implements Serializable {
 
     /**
      * 消息总数

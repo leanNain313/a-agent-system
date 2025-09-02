@@ -10,6 +10,7 @@ import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.ai.enums.CodeGenTypeEnum;
+import com.ai.annotation.RateLimit;
 import com.ai.common.BaseResponse;
 import com.ai.common.ResultPage;
 import com.ai.common.ResultUtils;
@@ -30,6 +31,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -152,6 +154,11 @@ public class AppController {
      */
     @GetMapping("/page/featured")
     @Operation(summary = "精选应用分页列表")
+    @Cacheable(
+            value = "good_app_list",
+            key = "T(com.ai.utils.CacheKeyUtils).generateKey(#request)",
+            condition = "#request.pageNo <= 20"
+    )
     public BaseResponse<ResultPage<AppVO>> pageFeatured(@ParameterObject AppPageRequest request) {
         if (request == null || ObjectUtil.isEmpty(request.getPageNo()) || ObjectUtil.isEmpty(request.getPageSize())) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
@@ -218,7 +225,8 @@ public class AppController {
 
     @Operation(summary = "聊天生成代码接口")
     @GetMapping(value = "/chat/generate/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<String>> chatGenerateCode(AppChatRequest request) {
+    @RateLimit(rateInterval = 60, rate = 5) // 每分钟请求5次的流量
+    public Flux<ServerSentEvent<String>> chatGenerateCode(@ParameterObject AppChatRequest request) {
         // 参数校验
         ThrowUtils.throwIf(request == null, ErrorCode.NULL_ERROR);
         ThrowUtils.throwIf(StrUtil.isBlank(request.getMessage()) || request.getId() == null

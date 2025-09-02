@@ -56,9 +56,9 @@ public class JsonMessageStreamHandler {
                     // 流式响应完成后，添加 AI 消息到对话历史
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.saveChatMessage(appId, userId, aiResponse, MessageTypeEnum.AI.getValue());
-                    // 构建应用
-                    String dirPath = AppConstant.CODE_OUT_DIR + "/vue_project_" + appId;
-                    vueProjectBuilder.buildProjectAsync(dirPath);
+//                    // 构建应用
+//                    String dirPath = AppConstant.CODE_OUT_DIR + "/vue_project_" + appId;
+//                    vueProjectBuilder.buildProject(dirPath);
                 })
                 .doOnError(error -> {
                     // 如果AI回复失败，也要记录错误消息

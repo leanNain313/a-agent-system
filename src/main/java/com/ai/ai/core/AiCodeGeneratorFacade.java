@@ -5,6 +5,7 @@ import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.ai.CodeFileSaver;
+import com.ai.ai.builder.VueProjectBuilder;
 import com.ai.ai.enums.CodeGenTypeEnum;
 import com.ai.ai.model.HtmlCodeResult;
 import com.ai.ai.model.MultiFileCodeResult;
@@ -15,6 +16,7 @@ import com.ai.ai.parser.CodeParserExecutor;
 import com.ai.ai.save.CodeFileSaverExecutor;
 import com.ai.ai.service.AiCodeGeneratorService;
 import com.ai.ai.service.AiCodeGeneratorServiceFactory;
+import com.ai.contant.AppConstant;
 import dev.langchain4j.service.TokenStream;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,9 @@ public class AiCodeGeneratorFacade {
 
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
 
     /**
@@ -56,7 +61,7 @@ public class AiCodeGeneratorFacade {
             }
             case VUE_PROJECT -> {
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCode(appId, userMessage);
-                yield handleTokenStream(tokenStream);
+                yield handleTokenStream(tokenStream,appId);
             }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "未知代码类型");
         };
@@ -66,7 +71,7 @@ public class AiCodeGeneratorFacade {
      * 处理token流，将其包装成Flux流
      */
 
-    public Flux<String> handleTokenStream(TokenStream tokenStream) {
+    public Flux<String> handleTokenStream(TokenStream tokenStream, Long appId) {
         return Flux.create(sink -> {
             tokenStream.onPartialResponse(response -> {
                 // ai回复内容
@@ -84,6 +89,9 @@ public class AiCodeGeneratorFacade {
                         sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
                     })
                     .onCompleteResponse(chatResponse -> {
+                        // 构建应用
+                        String dirPath = AppConstant.CODE_OUT_DIR + "/vue_project_" + appId;
+                        vueProjectBuilder.buildProject(dirPath);
                         // 执行完毕
                         sink.complete();
                     })

@@ -8,12 +8,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Schema(description = "账户功能封禁状态(封禁时间是解除封禁的剩余秒数)")
-public class AccountFunctionStateVO {
+public class AccountFunctionStateVO implements Serializable {
 
     @Schema(description = "所有功能")
     private boolean allFunction;

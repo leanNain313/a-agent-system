@@ -1,4 +1,4 @@
-package com.ai.config;
+package com.ai.manager.cos.config;
 
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;

@@ -4,6 +4,7 @@ import com.ai.langGraph4j.tools.ImageSearchTool;
 import com.ai.langGraph4j.tools.LogoGeneratorTool;
 import com.ai.langGraph4j.tools.MermaidDiagramTool;
 import com.ai.langGraph4j.tools.UndrawIllustrationTool;
+import com.ai.utils.SpringContextUtil;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.Resource;
@@ -17,9 +18,6 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 public class ImageCollectionServiceFactory {
-
-    @Resource
-    private ChatModel chatModel;
 
     @Resource
     private ImageSearchTool imageSearchTool;
@@ -38,6 +36,7 @@ public class ImageCollectionServiceFactory {
      */
     @Bean
     public ImageCollectionService createImageCollectionService() {
+        ChatModel chatModel = SpringContextUtil.getBean("routingChatModelPrototype", ChatModel.class);
         return AiServices.builder(ImageCollectionService.class)
                 .chatModel(chatModel)
                 .tools(
