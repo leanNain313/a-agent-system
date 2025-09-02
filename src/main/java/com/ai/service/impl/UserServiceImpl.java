@@ -123,7 +123,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public UserVO doLogin(LoginRequest loginRequest , HttpServletRequest request) {
+    public UserVO doLogin(LoginRequest loginRequest) {
         String userAccount = loginRequest.getUserAccount();
         String userPassword = loginRequest.getUserPassword();
         // 不得为空
@@ -160,8 +160,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             this.disabledHandle(disableTime);
         }
         UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
-        // 记录用户登录状态
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATUS, userVO);
         // 登录并记录登录状态生成sa-token 注意这个过去时间和 SpringSession 一致的
         ThrowUtils.throwIf(StrUtil.isBlank(loginRequest.getDeviceType()), ErrorCode.NULL_ERROR);
         StpUtil.login(user.getId());
@@ -284,7 +282,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * 删除失败
      */
     @Override
-    public void removeUserById(Long id, HttpServletRequest request) {
+    public void removeUserById(Long id) {
         // 校验二级认证
         ThrowUtils.throwIf(!StpUtil.isSafe(), ErrorCode.AUTH_ERROR);
         boolean remove = this.removeById(id);

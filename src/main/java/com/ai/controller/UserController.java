@@ -74,16 +74,17 @@ public class UserController {
     @Operation(summary = "发送验证码，有效期5分钟")
     @PostMapping("/code")
     public BaseResponse<Object> send(@Parameter(description = "邮箱") @Email(message = "邮箱格式错误") String email, @Parameter(description = "验证码类型：" +
-            "'login', 'register', 'reset', 'twoAuth'") String type) {
+            "'login', 'register', 'reset', 'twoAuth'") String type, @Parameter String imageCode) {
         ThrowUtils.throwIf(StrUtil.isBlank(email) || StrUtil.isBlank(type), ErrorCode.NULL_ERROR);
         ThrowUtils.throwIf(AuthCodeType.getEnumByValue(type) == null, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(StrUtil.isBlank(imageCode), ErrorCode.NULL_ERROR, "图形验证码为空");
         // 防止刷验证码
         String emailCode = emailService.getEmailCode(email, type);
         if (!StrUtil.isBlank(emailCode)) {
             Long codeExpire = emailService.getCodeExpire(email, type);
             ThrowUtils.throwIf(codeExpire.compareTo(240L) > 0, ErrorCode.SYSTEM_ERROR, "操作频繁， 请稍后重试");
         }
-        boolean b = emailService.sendEmailCode(email, type);
+        boolean b = emailService.sendEmailCode(email, type, imageCode);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "验证码发送失败");
         return ResultUtils.success();
     }
@@ -100,16 +101,18 @@ public class UserController {
     /**
      * 用户登录
      * @param userDoLoginRequest 请求封装类
-     * @param request 网络请求，获取session
      * @return 返回用户信息（脱敏）
      */
     @PostMapping("/doLogin")
     @Operation(summary = "用户登录")
-    public BaseResponse<UserVO> userDoLogin(@RequestBody LoginRequest userDoLoginRequest, HttpServletRequest request) {
-        if (ObjectUtil.isEmpty(userDoLoginRequest) || ObjectUtil.isEmpty(request)) {
+    public BaseResponse<UserVO> userDoLogin(@RequestBody LoginRequest userDoLoginRequest) {
+        if (ObjectUtil.isEmpty(userDoLoginRequest)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        UserVO result =  userService.doLogin(userDoLoginRequest, request);
+        ThrowUtils.throwIf(StrUtil.isBlank(userDoLoginRequest.getImageCode()), ErrorCode.NULL_ERROR, "图形验证码为空");
+        // 校验图形验证码是否正确
+        emailService.checkImageCode(userDoLoginRequest.getUserAccount(), userDoLoginRequest.getImageCode());
+        UserVO result =  userService.doLogin(userDoLoginRequest);
         log.info("登录用户账户：{}", result.getUserAccount());
         return ResultUtils.success(result);
     }
@@ -132,12 +135,11 @@ public class UserController {
 
     /**
      * 用户登出
-     * @param request 请求
      * @return 返回结果
      */
     @PostMapping("/loginOut")
     @Operation(summary = "退出登录")
-    public BaseResponse<Object> loginOut(HttpServletRequest request) {
+    public BaseResponse<Object> loginOut() {
         userService.loginOut();
         return ResultUtils.success();
     }
@@ -191,11 +193,11 @@ public class UserController {
     @PostMapping("/delete")
     @Operation(summary = "删除用户(管理员)")
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
-    public BaseResponse<Object> removeUserById(@Parameter(description = "用户id(必须)")Long id, HttpServletRequest request) {
+    public BaseResponse<Object> removeUserById(@Parameter(description = "用户id(必须)")Long id) {
         if (ObjectUtil.isEmpty(id)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        userService.removeUserById(id, request);
+        userService.removeUserById(id);
         return ResultUtils.success();
     }
 

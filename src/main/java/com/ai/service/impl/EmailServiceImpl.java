@@ -1,5 +1,6 @@
 package com.ai.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
 import com.ai.contant.RedisConstant;
@@ -90,13 +91,11 @@ public class EmailServiceImpl implements EmailService {
      * @return 返回验证码
      */
     @Override
-    public boolean sendEmailCode(String email, String type) {
+    public boolean sendEmailCode(String email, String type, String value) {
+        checkImageCode(email, value);
         try {
             // 生成6位随机验证码
             String code = generateRandomCode(6);
-
-
-
             // 验证码类型对应的邮件主题
             String subject;
             switch (type) {
@@ -159,5 +158,12 @@ public class EmailServiceImpl implements EmailService {
 
     private String buildKey(String email, String type) {
         return String.format("%s%s:%s", RedisConstant.REDIS_EMAIL, email, type);
+    }
+
+    public void checkImageCode(String email, String imageCode) {
+        String key = RedisConstant.LOGIN_CODE + email;
+        String code = redisTemplate.opsForValue().get(key);
+        ThrowUtils.throwIf(StrUtil.isBlank(imageCode), ErrorCode.CODE_OVERDUE_ERROR, "图形验证码已过期");
+        ThrowUtils.throwIf(!imageCode.equals(code), ErrorCode.PARAMS_ERROR, "图形验证码输入错误");
     }
 }

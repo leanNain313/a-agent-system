@@ -32,4 +32,10 @@ public class LoginRequest implements Serializable {
      */
     @Schema(description = "此次登录的客户端设备唯一标识id(可不传)")
     private String deviceId;
+
+    /**
+     * 图形验证码
+     */
+    @Schema(description = "图形验证码")
+    private String imageCode;
 }

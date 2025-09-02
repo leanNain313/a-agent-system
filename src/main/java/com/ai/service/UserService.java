@@ -17,7 +17,7 @@ public interface UserService extends IService<User> {
 
     void register(RegisterRequest registerRequest);
 
-    UserVO doLogin(LoginRequest loginRequest , HttpServletRequest request);
+    UserVO doLogin(LoginRequest loginRequest);
 
     void resetPassword(RegisterRequest registerRequest);
 
@@ -27,7 +27,7 @@ public interface UserService extends IService<User> {
 
     void updateUserByUser(UpdateUserRequest updateUserRequest);
 
-    void removeUserById(Long id, HttpServletRequest request);
+    void removeUserById(Long id);
 
     ResultPage<UserVO> getUserList(UserPageRequest userPageRequest);
 
