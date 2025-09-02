@@ -2,6 +2,8 @@ package com.ai.langGraph4j;
 
 import com.ai.Exception.BusinessException;
 import com.ai.Exception.ErrorCode;
+import com.ai.ai.enums.CodeGenTypeEnum;
+import com.ai.langGraph4j.model.QualityResult;
 import com.ai.langGraph4j.node.*;
 import com.ai.langGraph4j.state.WorkflowContext;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +11,7 @@ import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphRepresentation;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.NodeOutput;
+import org.bsc.langgraph4j.action.AsyncEdgeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
 
@@ -38,8 +41,13 @@ public class CodeGenWorkflow {
                     .addEdge(START, "image_collector")
                     .addEdge("image_collector", "prompt_enhancer")
                     .addEdge("prompt_enhancer", "router")
-                    .addEdge("router", "code_generator")
-                    .addEdge("code_generator", "project_builder")
+                    .addEdge("router", "code_generator") //添加条件边
+                    .addConditionalEdges("code_generator",
+                            AsyncEdgeAction.edge_async(this::routeAfterQualityCheck),
+                            Map.of("build", "project_builder", // 质检成功并且需要构建
+                                    "skip_build", END, // 质检成功不需要构建
+                                    "fail", "code_generator") // 质检失败需要重新生成代码
+                    )
                     .addEdge("project_builder", END)
 
                     // 编译工作流
@@ -47,6 +55,37 @@ public class CodeGenWorkflow {
         } catch (GraphStateException e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "工作流创建失败");
         }
+    }
+
+    /**
+     * 判断是否需要执行构建
+     * @param state 上下文信息
+     * @return  返回构建的标志
+     */
+    private String routeBuildOrSkip(MessagesState<String> state) {
+        WorkflowContext context = WorkflowContext.getContext(state);
+        CodeGenTypeEnum generationType = context.getGenerationType();
+        if (generationType == CodeGenTypeEnum.MULTI_FILE || generationType == CodeGenTypeEnum.HTML) {
+            return "skip_build";
+        }
+        return "build";
+
+    }
+
+    /**
+     * 根据质检结果决定下一步
+     */
+    private String routeAfterQualityCheck(MessagesState<String> state) {
+        WorkflowContext context = WorkflowContext.getContext(state);
+        QualityResult qualityResult = context.getQualityResult();
+        // 如果质检失败，重新生成代码
+        if (qualityResult == null || !qualityResult.getIsValid()) {
+            log.error("代码质检失败，需要重新生成代码");
+            return "fail";
+        }
+        // 质检通过，使用原有的构建路由逻辑
+        log.info("代码质检通过，继续后续流程");
+        return routeBuildOrSkip(state);
     }
 
     /**
