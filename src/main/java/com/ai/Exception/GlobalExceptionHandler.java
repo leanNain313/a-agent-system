@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
             return null;
         }
         // 对于普通请求，返回标准 JSON 响应
-        return ResultUtils.error(ErrorCode.SYSTEM_ERROR, e.getMessage());
+        return ResultUtils.error(e.getCode(), e.getMessage(), "");
     }
 
     @ExceptionHandler(RuntimeException.class)

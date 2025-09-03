@@ -74,17 +74,21 @@ public class UserController {
     @Operation(summary = "发送验证码，有效期5分钟")
     @PostMapping("/code")
     public BaseResponse<Object> send(@Parameter(description = "邮箱") @Email(message = "邮箱格式错误") String email, @Parameter(description = "验证码类型：" +
-            "'login', 'register', 'reset', 'twoAuth'") String type, @Parameter String imageCode) {
+            "'login', 'register', 'reset', 'twoAuth'") String type, @Parameter(description = "图形验证码") String imageCode) {
         ThrowUtils.throwIf(StrUtil.isBlank(email) || StrUtil.isBlank(type), ErrorCode.NULL_ERROR);
         ThrowUtils.throwIf(AuthCodeType.getEnumByValue(type) == null, ErrorCode.PARAMS_ERROR);
-        ThrowUtils.throwIf(StrUtil.isBlank(imageCode), ErrorCode.NULL_ERROR, "图形验证码为空");
+        // 只有二级校验不需要图形验证码
+        if (!AuthCodeType.TWO_AUTH_CODE.getValue().equals(type)) {
+            ThrowUtils.throwIf(StrUtil.isBlank(imageCode), ErrorCode.NULL_ERROR, "图形验证码为空");
+            emailService.checkImageCode(email, imageCode);
+        }
         // 防止刷验证码
         String emailCode = emailService.getEmailCode(email, type);
         if (!StrUtil.isBlank(emailCode)) {
             Long codeExpire = emailService.getCodeExpire(email, type);
             ThrowUtils.throwIf(codeExpire.compareTo(240L) > 0, ErrorCode.SYSTEM_ERROR, "操作频繁， 请稍后重试");
         }
-        boolean b = emailService.sendEmailCode(email, type, imageCode);
+        boolean b = emailService.sendEmailCode(email, type);
         ThrowUtils.throwIf(!b, ErrorCode.SYSTEM_ERROR, "验证码发送失败");
         return ResultUtils.success();
     }
@@ -92,7 +96,7 @@ public class UserController {
     @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
     @PostMapping("/auth")
     @Operation(summary = "二级校验， 验证是本人在进行操作")
-    public BaseResponse<Object> twoAuth(@Parameter(description = "验证码") String code) {
+    public BaseResponse<Object> twoAuth (@Parameter(description = "验证码") String code) {
         ThrowUtils.throwIf(StrUtil.isEmpty(code), ErrorCode.NULL_ERROR);
         userService.AuthLevelToTwo(code);
         return ResultUtils.success();
@@ -116,8 +120,6 @@ public class UserController {
         log.info("登录用户账户：{}", result.getUserAccount());
         return ResultUtils.success(result);
     }
-
-
 
     /**
      * 获取当前登录用户信息
@@ -254,7 +256,6 @@ public class UserController {
         userService.disabledUser(accountDisableRequest);
         return ResultUtils.success();
     }
-
 
     /**
      * 根据id查询用户详情

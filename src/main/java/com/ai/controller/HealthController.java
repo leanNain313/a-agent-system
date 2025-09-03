@@ -26,7 +26,6 @@ public class HealthController {
 
     @PostMapping("/screen/tool/test")
     @Operation(summary = "截图工具测试")
-    @SaCheckPermission(UserPermissionConstant.USER_MANAGE)
     public BaseResponse<String> screenShotTest() {
         String testUrl = "https://www.codefather.cn";
         String webPageScreenshot = WebScreenImageUtils.executeScreenImage(testUrl);

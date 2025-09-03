@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Email;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.ai.contant.AppConstant.IMAGE_TEMP_DIR;
 
+@Slf4j
 @RestController
 @RequestMapping("/file")
 @Tag(name = "文件操作接口")
@@ -97,12 +99,15 @@ public class FileOperateController {
         // 创建干扰验证码
         ShearCaptcha captcha = CaptchaUtil.createShearCaptcha(100, 30, 4, 4);
         // 设置为四则运算验证码
-        captcha.setGenerator(new MathGenerator());
+        MathGenerator mathGenerator = new MathGenerator();
+        captcha.setGenerator(mathGenerator);
         // 生成验证码
         captcha.createCode();
         String code = captcha.getCode();
         String key = RedisConstant.LOGIN_CODE + email;
+        // 获取表达式生成的结果
         redisTemplate.opsForValue().set(key, code, 300, TimeUnit.SECONDS); // 过期时间300s
+        log.info("图形验证码的结果为：{}", code);
         try {
             // 输出到响应流
             captcha.write(response.getOutputStream());

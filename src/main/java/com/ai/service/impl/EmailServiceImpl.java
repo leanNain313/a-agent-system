@@ -1,5 +1,6 @@
 package com.ai.service.impl;
 
+import cn.hutool.captcha.generator.MathGenerator;
 import cn.hutool.core.util.StrUtil;
 import com.ai.Exception.ErrorCode;
 import com.ai.Exception.ThrowUtils;
@@ -91,11 +92,11 @@ public class EmailServiceImpl implements EmailService {
      * @return 返回验证码
      */
     @Override
-    public boolean sendEmailCode(String email, String type, String value) {
-        checkImageCode(email, value);
+    public boolean sendEmailCode(String email, String type) {
         try {
             // 生成6位随机验证码
             String code = generateRandomCode(6);
+            log.info("邮箱验证码为：{}", code);
             // 验证码类型对应的邮件主题
             String subject;
             switch (type) {
@@ -107,6 +108,9 @@ public class EmailServiceImpl implements EmailService {
                     break;
                 case "reset":
                     subject = "重置密码验证码";
+                    break;
+                case "twoAuth":
+                    subject = "校验是本人正在操作";
                     break;
                 default:
                     subject = "验证码";
@@ -163,7 +167,8 @@ public class EmailServiceImpl implements EmailService {
     public void checkImageCode(String email, String imageCode) {
         String key = RedisConstant.LOGIN_CODE + email;
         String code = redisTemplate.opsForValue().get(key);
-        ThrowUtils.throwIf(StrUtil.isBlank(imageCode), ErrorCode.CODE_OVERDUE_ERROR, "图形验证码已过期");
-        ThrowUtils.throwIf(!imageCode.equals(code), ErrorCode.PARAMS_ERROR, "图形验证码输入错误");
+        ThrowUtils.throwIf(StrUtil.isBlank(code), ErrorCode.CODE_OVERDUE_ERROR, "图形验证码已过期");
+        MathGenerator mathGenerator = new MathGenerator();
+        ThrowUtils.throwIf(!mathGenerator.verify(code, imageCode), ErrorCode.PARAMS_ERROR, "图形验证码输入错误");
     }
 }

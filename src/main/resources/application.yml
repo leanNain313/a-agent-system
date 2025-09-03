@@ -10,7 +10,7 @@ spring:
     password: <你的密码>
   data:
     redis: # 你的redis配置
-      host: 127.0.0.1
+      host: <你的地址>
       port: 6379
       connect-timeout: 5000
       ttl: 3600
@@ -25,6 +25,8 @@ spring:
           # 连接池中的最小空闲连接
           min-idle: 0
       database: 3
+      username: root
+      password: <你的密码>
   mail:
     host: smtp.qq.com
     port: 587

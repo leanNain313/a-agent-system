@@ -389,9 +389,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(StrUtil.isBlank(code), ErrorCode.NULL_ERROR);
         UserVO userVO = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATUS);
         ThrowUtils.throwIf(userVO == null, ErrorCode.NO_LOGIN);
-        String emailCode = emailService.getEmailCode(userVO.getUserAccount(), code);
+        String emailCode = emailService.getEmailCode(userVO.getUserAccount(),AuthCodeType.TWO_AUTH_CODE.getValue());
         ThrowUtils.throwIf(StrUtil.isEmpty(emailCode), ErrorCode.CODE_OVERDUE_ERROR);
         ThrowUtils.throwIf(!emailCode.equals(code), ErrorCode.CODE_ERROR);
+        StpUtil.openSafe(300); // 默认校验时长300秒
     }
 
     /**

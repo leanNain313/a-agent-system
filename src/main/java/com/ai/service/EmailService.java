@@ -8,9 +8,9 @@ public interface EmailService {
 
     void removeEmailCode(String email, String type);
 
-    boolean sendEmailCode(String email, String type, String imageCode);
+    boolean sendEmailCode(String email, String type);
 
     Long getCodeExpire(String email, String type);
 
-    public void checkImageCode(String email, String imageCode);
+    void checkImageCode(String email, String imageCode);
 }
