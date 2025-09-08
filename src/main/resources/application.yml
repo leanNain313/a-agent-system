@@ -95,8 +95,8 @@ langchain4j:
       log-requests: true
       log-responses: true
       max-tokens: 8192
-#      strict-json-schema: true
-#      response-format: json_object
+    #      strict-json-schema: true
+    #      response-format: json_object
     streaming-chat-model:
       base-url: <你的模型地址>
       api-key: <你的api密钥>
@@ -128,8 +128,15 @@ cos:
     bucket: <你的桶>
 pexels:
   api-key: <你的密钥>
-
 dashscope:
   api-key: <你的阿里云百炼密钥>
   image-model: <你的阿里云百炼文生图模型>
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always

@@ -1,0 +1,32 @@
+package com.ye.model.dto.user;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.io.Serializable;
+
+@Data
+@Schema(description = "账号注册参数类")
+public class RegisterRequest implements Serializable {
+
+    /**
+     * 账户
+     */
+    @Schema(description = "邮箱(必须)")
+    private String userAccount;
+
+    /**
+     * 密码
+     */
+    @Schema(description = "密码， 不得少于8位， 不得包含特殊字符(必须)")
+    private String userPassword;
+
+    /**
+     * 检查密码
+     */
+    @Schema(description = "二次检验密码(必须)")
+    private String checkPassword;
+
+    @Schema(description = "验证码")
+    private String code;
+}

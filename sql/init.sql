@@ -46,7 +46,7 @@ create table chat_history
 (
     id          bigint auto_increment comment 'id' primary key,
     message     text                               not null comment '消息',
-    messageType varchar(32)                        not null comment 'user/ai',
+    messageType varchar(32)                        not null comment 'user/ye',
     appId       bigint                             not null comment '应用id',
     userId      bigint                             not null comment '创建用户id',
     createTime  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
@@ -56,3 +56,38 @@ create table chat_history
     INDEX idx_createTime (createTime),   -- 提升基于时间的查询性能
     INDEX idx_appId_createTime (appId, createTime) -- 游标查询核心索引
 ) comment '对话历史' collate = utf8mb4_unicode_ci;
+
+-- 帖子表
+CREATE TABLE post_table (
+                            id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '帖子ID',
+                            title VARCHAR(255) NOT NULL COMMENT '帖子标题',
+                            content TEXT NOT NULL COMMENT '帖子内容',
+                            like_set JSON DEFAULT NULL COMMENT '点赞用户集合(JSON存user_id数组)',
+                            user_id BIGINT NOT NULL COMMENT '发帖用户ID',
+                            create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                            edit_time TIMESTAMP NULL DEFAULT NULL COMMENT '编辑时间',
+                            update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                            is_delete TINYINT(1) DEFAULT 0 COMMENT '是否删除(0=正常,1=删除)',
+                            audit_status INT DEFAULT 0 COMMENT '审核状态(0=未通过,1=通过)',
+                            explain varchar(256) null comment '审核原因',
+                            priority int default 0 null comment '优先级',
+                            INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='帖子表';
+
+
+-- 评论表
+CREATE TABLE comment_table (
+                               id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '评论ID',
+                               content TEXT NOT NULL COMMENT '评论内容',
+                               like_set JSON DEFAULT NULL COMMENT '点赞用户集合(JSON存user_id数组)',
+                               father_id BIGINT NOT NULL COMMENT '父评论ID(为空表示顶级评论)',
+                               user_id BIGINT NOT NULL COMMENT '评论用户ID',
+                               comment_level INT DEFAULT 1 COMMENT '评论层级(1=一级评论,2=二级...)',
+                               create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                               edit_time TIMESTAMP NULL DEFAULT NULL COMMENT '编辑时间',
+                               update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                               is_delete TINYINT(1) DEFAULT 0 COMMENT '是否删除(0=正常,1=删除)',
+                               post_id bigint null comment '帖子id',
+                               INDEX idx_user_id (user_id),
+                               INDEX idx_father_id (father_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评论表';

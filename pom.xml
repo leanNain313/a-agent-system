@@ -54,7 +54,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
-        <!--Ai框架-->
+        <!-- Ai框架 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
@@ -65,19 +65,19 @@
             <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
             <version>1.1.0-beta7</version>
         </dependency>
-        <!--Ai工作流框架-->
+        <!-- Ai工作流框架 -->
         <dependency>
             <groupId>org.bsc.langgraph4j</groupId>
             <artifactId>langgraph4j-core</artifactId>
             <version>1.6.0-rc2</version>
         </dependency>
-        <!--第三方流式输出框架-->
+        <!-- 第三方流式输出框架 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-reactor</artifactId>
             <version>1.1.0-beta7</version>
         </dependency>
-        <!--redis会话记忆-->
+        <!-- redis会话记忆 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
@@ -87,7 +87,7 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
-        <!--邮箱验证码依赖-->
+        <!-- 邮箱验证码依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -100,7 +100,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-        <!--sa-token权限认证框架-->
+        <!-- sa-token权限认证框架 -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-spring-boot3-starter</artifactId>
@@ -117,7 +117,7 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
-        <!--redis缓存依赖-->
+        <!-- redis缓存依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -128,43 +128,43 @@
             <artifactId>redisson</artifactId>
             <version>3.50.0</version>
         </dependency>
-        <!--mybatis-plus-->
+        <!-- mybatis-plus -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.12</version>
         </dependency>
-        <!--分页工具依赖-->
+        <!-- 分页工具依赖 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
             <version>3.5.12</version>
         </dependency>
-        <!--接口文档依赖-->
+        <!-- 接口文档依赖 -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
             <version>4.4.0</version>
         </dependency>
-        <!--常用工具库-->
+        <!-- 常用工具库 -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
             <version>5.8.39</version>
         </dependency>
-        <!--网页截图依赖-->
+        <!-- 网页截图依赖 -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>4.33.0</version>
         </dependency>
-        <!--自动下载管理浏览器的依赖-->
+        <!-- 自动下载管理浏览器的依赖 -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
             <version>6.1.0</version>
         </dependency>
-        <!--腾讯云储存cos-->
+        <!-- 腾讯云储存cos -->
         <dependency>
             <groupId>com.qcloud</groupId>
             <artifactId>cos_api</artifactId>
@@ -175,6 +175,15 @@
             <groupId>com.alibaba</groupId>
             <artifactId>dashscope-sdk-java</artifactId>
             <version>2.21.1</version>
+        </dependency>
+        <!-- 可视化监控数据提供依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
     </dependencies>
 
